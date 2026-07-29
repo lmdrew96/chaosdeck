@@ -81,3 +81,18 @@ export const searchByName = query({
       .take(20);
   },
 });
+
+// Case-insensitive exact-name lookup for deck import: an exact match should
+// always land in the search index's top results for its own name, so this
+// reuses search_name rather than needing a separate index.
+export const findExactByName = query({
+  args: { name: v.string() },
+  handler: async (ctx, { name }) => {
+    const candidates = await ctx.db
+      .query("cards")
+      .withSearchIndex("search_name", (q) => q.search("name", name))
+      .take(20);
+    const target = name.trim().toLowerCase();
+    return candidates.find((c) => c.name.toLowerCase() === target) ?? null;
+  },
+});

@@ -11,6 +11,8 @@
 import type * as cardInstances from "../cardInstances.js";
 import type * as cards from "../cards.js";
 import type * as crons from "../crons.js";
+import type * as deckImport from "../deckImport.js";
+import type * as deckListParser from "../deckListParser.js";
 import type * as games from "../games.js";
 import type * as oracleTagger from "../oracleTagger.js";
 import type * as scryfallIngest from "../scryfallIngest.js";
@@ -25,6 +27,8 @@ declare const fullApi: ApiFromModules<{
   cardInstances: typeof cardInstances;
   cards: typeof cards;
   crons: typeof crons;
+  deckImport: typeof deckImport;
+  deckListParser: typeof deckListParser;
   games: typeof games;
   oracleTagger: typeof oracleTagger;
   scryfallIngest: typeof scryfallIngest;
