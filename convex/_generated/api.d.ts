@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as cardInstances from "../cardInstances.js";
 import type * as cards from "../cards.js";
 import type * as crons from "../crons.js";
+import type * as games from "../games.js";
 import type * as oracleTagger from "../oracleTagger.js";
 import type * as scryfallIngest from "../scryfallIngest.js";
 
@@ -20,8 +22,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  cardInstances: typeof cardInstances;
   cards: typeof cards;
   crons: typeof crons;
+  games: typeof games;
   oracleTagger: typeof oracleTagger;
   scryfallIngest: typeof scryfallIngest;
 }>;
