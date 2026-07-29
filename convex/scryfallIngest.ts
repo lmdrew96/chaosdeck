@@ -6,6 +6,7 @@ import { Readable } from "node:stream";
 import readline from "node:readline";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { tagOracleText } from "./oracleTagger";
 
 const BATCH_SIZE = 500;
 const USER_AGENT = "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)";
@@ -82,6 +83,9 @@ function toCardDoc(raw: ScryfallCard) {
     legalities: raw.legalities ?? {},
     priceUsd: raw.prices?.usd ?? undefined,
     scryfallUri: raw.scryfall_uri,
+    // Tag the whole-card text; for multi-face cards this is null and each
+    // face is tagged from its own oracle_text instead (see cardFaces below).
+    tags: tagOracleText(raw.oracle_text, raw.name),
     cardFaces: raw.card_faces?.map((f) => ({
       name: f.name,
       manaCost: f.mana_cost ?? undefined,
@@ -91,6 +95,7 @@ function toCardDoc(raw: ScryfallCard) {
       toughness: f.toughness ?? undefined,
       loyalty: f.loyalty ?? undefined,
       imageUri: f.image_uris?.normal ?? undefined,
+      tags: tagOracleText(f.oracle_text, f.name),
     })),
   };
 }

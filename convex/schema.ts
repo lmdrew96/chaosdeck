@@ -1,6 +1,14 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// A clause of oracle text pattern-matched into a trigger/ability category —
+// see oracleTagger.ts. Detection, not interpretation: this says the
+// capability exists on the card, not that it has fired.
+const taggedClause = v.object({
+  tag: v.string(),
+  optional: v.boolean(),
+});
+
 // One row per card face, used for both the top-level card and each entry in
 // card_faces[] (transform/MDFC/split/adventure cards store name/mana_cost/
 // type_line/oracle_text per-face instead of at the card's top level).
@@ -13,6 +21,7 @@ const cardFace = v.object({
   toughness: v.optional(v.string()),
   loyalty: v.optional(v.string()),
   imageUri: v.optional(v.string()),
+  tags: v.array(taggedClause),
 });
 
 export default defineSchema({
@@ -39,6 +48,7 @@ export default defineSchema({
     legalities: v.record(v.string(), v.string()),
     priceUsd: v.optional(v.string()),
     scryfallUri: v.string(),
+    tags: v.array(taggedClause),
     // Present only for transform/MDFC/split/adventure layouts.
     cardFaces: v.optional(v.array(cardFace)),
   })

@@ -10,6 +10,7 @@
 
 import type * as cards from "../cards.js";
 import type * as crons from "../crons.js";
+import type * as oracleTagger from "../oracleTagger.js";
 import type * as scryfallIngest from "../scryfallIngest.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   cards: typeof cards;
   crons: typeof crons;
+  oracleTagger: typeof oracleTagger;
   scryfallIngest: typeof scryfallIngest;
 }>;
 

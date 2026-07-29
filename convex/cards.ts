@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
 
+const taggedClause = v.object({
+  tag: v.string(),
+  optional: v.boolean(),
+});
+
 const cardFace = v.object({
   name: v.string(),
   manaCost: v.optional(v.string()),
@@ -10,6 +15,7 @@ const cardFace = v.object({
   toughness: v.optional(v.string()),
   loyalty: v.optional(v.string()),
   imageUri: v.optional(v.string()),
+  tags: v.array(taggedClause),
 });
 
 const cardFields = {
@@ -31,6 +37,7 @@ const cardFields = {
   legalities: v.record(v.string(), v.string()),
   priceUsd: v.optional(v.string()),
   scryfallUri: v.string(),
+  tags: v.array(taggedClause),
   cardFaces: v.optional(v.array(cardFace)),
 };
 
