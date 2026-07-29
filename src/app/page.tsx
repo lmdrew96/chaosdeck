@@ -1,63 +1,103 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
+const FORMAT_OPTIONS = ["commander", "modern", "pioneer", "standard", "legacy", "pauper"];
 
 export default function Home() {
+  const decks = useQuery(api.decks.listDecks, {});
+  const createDeck = useMutation(api.decks.createDeck);
+  const deleteDeck = useMutation(api.decks.deleteDeck);
+
+  const [name, setName] = useState("");
+  const [format, setFormat] = useState(FORMAT_OPTIONS[0]);
+  const [creating, setCreating] = useState(false);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setCreating(true);
+    try {
+      await createDeck({ name: name.trim(), format });
+      setName("");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-1 flex-col items-center bg-dark-purple px-6 py-16">
+      <main className="flex w-full max-w-2xl flex-col gap-10">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-saffron">ChaosDeck</h1>
+          <p className="mt-1 text-sm text-[#dbd5e2]">MTG deckbuilder + goldfish-plus playtester</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <form
+          onSubmit={handleCreate}
+          className="flex flex-col gap-3 rounded-xl bg-ultra-violet p-5 sm:flex-row sm:items-end"
+        >
+          <div className="flex flex-1 flex-col gap-1">
+            <label className="text-xs font-medium text-[#dbd5e2]">Deck name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="New deck"
+              className="rounded-md bg-dark-purple px-3 py-2 text-sm text-[#f7f5fa] outline-none ring-1 ring-white/10 focus:ring-saffron"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#dbd5e2]">Format</label>
+            <select
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              className="rounded-md bg-dark-purple px-3 py-2 text-sm text-[#f7f5fa] outline-none ring-1 ring-white/10 focus:ring-saffron"
+            >
+              {FORMAT_OPTIONS.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={creating || !name.trim()}
+            className="rounded-md bg-saffron px-4 py-2 text-sm font-semibold text-dark-purple transition hover:brightness-95 disabled:opacity-50"
           >
-            Documentation
-          </a>
+            Create deck
+          </button>
+        </form>
+
+        <div className="flex flex-col gap-2">
+          {decks === undefined && <p className="text-sm text-[#dbd5e2]">Loading decks…</p>}
+          {decks?.length === 0 && (
+            <p className="text-sm text-[#dbd5e2]">No decks yet — create one above to get started.</p>
+          )}
+          {decks?.map((deck) => (
+            <div
+              key={deck._id}
+              className="flex items-center justify-between rounded-lg bg-ultra-violet px-4 py-3"
+            >
+              <Link href={`/decks/${deck._id}`} className="flex flex-col">
+                <span className="font-medium text-[#f7f5fa]">{deck.name}</span>
+                <span className="text-xs uppercase tracking-wide text-saffron">
+                  {deck.format}
+                </span>
+              </Link>
+              <button
+                onClick={() => {
+                  if (confirm(`Delete "${deck.name}"?`)) void deleteDeck({ deckId: deck._id });
+                }}
+                className="text-xs text-[#dbd5e2] hover:text-saffron"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
         </div>
       </main>
     </div>

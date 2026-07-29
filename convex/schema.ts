@@ -53,7 +53,35 @@ const manaPool = v.object({
   C: v.number(),
 });
 
+const deckSection = v.union(
+  v.literal("deck"),
+  v.literal("sideboard"),
+  v.literal("commander"),
+  v.literal("companion"),
+);
+
 export default defineSchema({
+  decks: defineTable({
+    name: v.string(),
+    // Free-text format key, checked against a card's `legalities` record
+    // (e.g. "commander", "modern") — not a fixed enum, since Scryfall adds
+    // formats over time (see cards.legalities comment).
+    format: v.string(),
+  }),
+
+  // One row per unique (section, card) pair per deck — a "4 Lightning Bolt"
+  // entry is one row with quantity 4, not four rows. Unlike cardInstances,
+  // deckbuilder entries have no independent per-copy state (tap, counters,
+  // zone), so a quantity field is sufficient and keeps the table small.
+  deckEntries: defineTable({
+    deckId: v.id("decks"),
+    section: deckSection,
+    cardOracleId: v.string(),
+    quantity: v.number(),
+  })
+    .index("by_deck", ["deckId"])
+    .index("by_deck_and_section_and_card", ["deckId", "section", "cardOracleId"]),
+
   cards: defineTable({
     // Scryfall's oracle_id is stable across reprints/sets — our upsert key.
     oracleId: v.string(),
