@@ -77,6 +77,9 @@ export default defineSchema({
     legalities: v.record(v.string(), v.string()),
     priceUsd: v.optional(v.string()),
     scryfallUri: v.string(),
+    // Needed for the pointer engine's "live instant-speed options" check —
+    // Flash is a keyword, not trigger text, so oracleTagger.ts can't see it.
+    keywords: v.array(v.string()),
     tags: v.array(taggedClause),
     // Present only for transform/MDFC/split/adventure layouts.
     cardFaces: v.optional(v.array(cardFace)),
@@ -102,6 +105,13 @@ export default defineSchema({
     // 21+ from a single source is a loss condition regardless of life total.
     commanderDamage: v.record(v.id("players"), v.number()),
     hasLost: v.boolean(),
+    // Reset to 0 at this player's own untap step — backs the pointer
+    // engine's "land not yet played" check.
+    landsPlayedThisTurn: v.number(),
+    // Pointer category keys this player has turned off (verbosity setting —
+    // ND-design constraint: default to showing everything, let veterans
+    // dial individual categories down rather than an all-or-nothing toggle).
+    mutedPointerTypes: v.array(v.string()),
   }).index("by_game", ["gameId"]),
 
   // One row per physical card instance in a game (a "4 Lightning Bolt" deck
@@ -127,6 +137,13 @@ export default defineSchema({
     // per the real rule, it becomes a new object and loses prior counters.
     summoningSick: v.boolean(),
     counters: v.record(v.string(), v.number()),
+    // Set when a card is exiled by an impulse-draw-style effect (tagged
+    // IMPULSE_EXILE on its source) — the turn number after which it can no
+    // longer be cast. Backs the pointer engine's "exiled card expiring"
+    // check. Not auto-detected: the player sets it when they make the
+    // exile happen, since the system can't tell an impulse effect from a
+    // permanent exile by zone alone.
+    playableUntilTurn: v.optional(v.number()),
   })
     .index("by_game_and_zone", ["gameId", "zone"])
     .index("by_owner_zone_position", ["ownerId", "zone", "position"]),

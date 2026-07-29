@@ -56,6 +56,7 @@ type ScryfallCard = {
   legalities: Record<string, string>;
   prices?: { usd?: string | null };
   scryfall_uri: string;
+  keywords?: string[];
   card_faces?: ScryfallCardFace[];
 };
 
@@ -83,6 +84,9 @@ function toCardDoc(raw: ScryfallCard) {
     legalities: raw.legalities ?? {},
     priceUsd: raw.prices?.usd ?? undefined,
     scryfallUri: raw.scryfall_uri,
+    // Whole-card property even for multi-face cards — Scryfall doesn't
+    // split this per-face.
+    keywords: raw.keywords ?? [],
     // Tag the whole-card text; for multi-face cards this is null and each
     // face is tagged from its own oracle_text instead (see cardFaces below).
     tags: tagOracleText(raw.oracle_text, raw.name),

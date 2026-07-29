@@ -15,6 +15,7 @@ import type * as deckImport from "../deckImport.js";
 import type * as deckListParser from "../deckListParser.js";
 import type * as games from "../games.js";
 import type * as oracleTagger from "../oracleTagger.js";
+import type * as pointers from "../pointers.js";
 import type * as scryfallIngest from "../scryfallIngest.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   deckListParser: typeof deckListParser;
   games: typeof games;
   oracleTagger: typeof oracleTagger;
+  pointers: typeof pointers;
   scryfallIngest: typeof scryfallIngest;
 }>;
 

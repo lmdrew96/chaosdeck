@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { shuffle, drawCards } from "./cardInstances";
+import { shuffle, drawCards, moveCardZone } from "./cardInstances";
 
 const PHASE_ORDER = ["untap", "upkeep", "draw", "main1", "combat", "main2", "end"] as const;
 
@@ -42,6 +42,8 @@ export const createGame = mutation({
         manaPool: EMPTY_MANA_POOL,
         commanderDamage: {},
         hasLost: false,
+        landsPlayedThisTurn: 0,
+        mutedPointerTypes: [],
       });
       playerIds.push(playerId);
     }
@@ -116,6 +118,7 @@ export const advancePhase = mutation({
       for (const permanent of battlefield) {
         await ctx.db.patch(permanent._id, { tapped: false, summoningSick: false });
       }
+      await ctx.db.patch(activePlayer._id, { landsPlayedThisTurn: 0 });
     }
 
     if (nextPhase === "draw") {
@@ -188,6 +191,30 @@ export const dealCommanderDamage = mutation({
       life,
       hasLost,
     });
+    return null;
+  },
+});
+
+// A dedicated action distinct from cardInstances.moveCard: playing a land
+// specifically consumes this turn's land drop, which generic zone-moves
+// (drawing, discarding, bouncing) must not.
+export const playLand = mutation({
+  args: { instanceId: v.id("cardInstances"), playerId: v.id("players") },
+  returns: v.null(),
+  handler: async (ctx, { instanceId, playerId }) => {
+    const player = await ctx.db.get(playerId);
+    if (!player) throw new Error("Player not found");
+    await moveCardZone(ctx, instanceId, "battlefield");
+    await ctx.db.patch(playerId, { landsPlayedThisTurn: player.landsPlayedThisTurn + 1 });
+    return null;
+  },
+});
+
+export const setMutedPointerTypes = mutation({
+  args: { playerId: v.id("players"), mutedPointerTypes: v.array(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, { playerId, mutedPointerTypes }) => {
+    await ctx.db.patch(playerId, { mutedPointerTypes });
     return null;
   },
 });

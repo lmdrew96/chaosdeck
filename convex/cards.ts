@@ -37,6 +37,7 @@ const cardFields = {
   legalities: v.record(v.string(), v.string()),
   priceUsd: v.optional(v.string()),
   scryfallUri: v.string(),
+  keywords: v.array(v.string()),
   tags: v.array(taggedClause),
   cardFaces: v.optional(v.array(cardFace)),
 };

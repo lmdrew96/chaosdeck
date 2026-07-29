@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, MutationCtx } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 
 const zone = v.union(
   v.literal("library"),
@@ -11,6 +11,8 @@ const zone = v.union(
   v.literal("stack"),
   v.literal("command"),
 );
+
+type Zone = Doc<"cardInstances">["zone"];
 
 export function shuffle<T>(items: T[]): T[] {
   const arr = [...items];
@@ -48,27 +50,48 @@ export async function drawCards(
   return drawn;
 }
 
+// Shared by the moveCard mutation and games.ts's playLand — a plain helper
+// so playLand's zone change and land-drop count stay in one transaction.
+export async function moveCardZone(
+  ctx: MutationCtx,
+  instanceId: Id<"cardInstances">,
+  toZone: Zone,
+  playableUntilTurn?: number,
+): Promise<void> {
+  const instance = await ctx.db.get(instanceId);
+  if (!instance) throw new Error("Card instance not found");
+
+  const patch: Record<string, unknown> = { zone: toZone };
+  if (instance.zone === "battlefield" && toZone !== "battlefield") {
+    // Leaving the battlefield: it becomes a new object and loses tap state,
+    // summoning sickness, and counters — a real, unambiguous rule.
+    patch.tapped = false;
+    patch.summoningSick = false;
+    patch.counters = {};
+  }
+  if (toZone === "battlefield" && instance.zone !== "battlefield") {
+    patch.tapped = false;
+    patch.summoningSick = true;
+  }
+  if (toZone === "exile" && playableUntilTurn !== undefined) {
+    patch.playableUntilTurn = playableUntilTurn;
+  }
+
+  await ctx.db.patch(instanceId, patch);
+}
+
 export const moveCard = mutation({
-  args: { instanceId: v.id("cardInstances"), toZone: zone },
+  args: {
+    instanceId: v.id("cardInstances"),
+    toZone: zone,
+    // Set when exiling via an impulse-draw-style effect (tagged
+    // IMPULSE_EXILE on its source) — the pointer engine surfaces a reminder
+    // until this turn number passes.
+    playableUntilTurn: v.optional(v.number()),
+  },
   returns: v.null(),
-  handler: async (ctx, { instanceId, toZone }) => {
-    const instance = await ctx.db.get(instanceId);
-    if (!instance) throw new Error("Card instance not found");
-
-    const patch: Record<string, unknown> = { zone: toZone };
-    if (instance.zone === "battlefield" && toZone !== "battlefield") {
-      // Leaving the battlefield: it becomes a new object and loses tap
-      // state, summoning sickness, and counters — a real, unambiguous rule.
-      patch.tapped = false;
-      patch.summoningSick = false;
-      patch.counters = {};
-    }
-    if (toZone === "battlefield" && instance.zone !== "battlefield") {
-      patch.tapped = false;
-      patch.summoningSick = true;
-    }
-
-    await ctx.db.patch(instanceId, patch);
+  handler: async (ctx, { instanceId, toZone, playableUntilTurn }) => {
+    await moveCardZone(ctx, instanceId, toZone, playableUntilTurn);
     return null;
   },
 });
