@@ -14,11 +14,11 @@ const COLOR_LABEL: Record<string, string> = {
   G: "Green",
 };
 const COLOR_SWATCH: Record<string, string> = {
-  W: "#f8c662",
-  U: "#595082",
-  B: "#2c263f",
-  R: "#7a2f2f",
-  G: "#41644a",
+  W: "#fff6eb",
+  U: "#0080ff",
+  B: "#141414",
+  R: "#ff0000",
+  G: "#00ff91",
 };
 
 export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
@@ -91,7 +91,7 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
                 style={{ backgroundColor: COLOR_SWATCH[color] }}
               />
               <span className="w-12 shrink-0 text-xs text-[#dbd5e2]">{COLOR_LABEL[color]}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-dark-purple">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-ultra-violet">
                 <div
                   className="h-full rounded-full"
                   style={{
