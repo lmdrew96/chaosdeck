@@ -41,7 +41,7 @@ export default function RootLayout({
             (function () {
               try {
                 var theme = window.localStorage.getItem("chaosdeck-theme");
-                var validThemes = ["default", "charcoal", "plum", "tide"];
+                var validThemes = ["default", "default-light", "charcoal", "charcoal-light", "plum", "plum-light", "tide", "tide-light"];
                 if (validThemes.indexOf(theme) === -1) return;
                 if (theme === "default") {
                   document.documentElement.removeAttribute("data-theme");

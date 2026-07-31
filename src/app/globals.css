@@ -2,39 +2,117 @@
 
 :root {
   --background: #201913;
+  --body-foreground: #f7f5fa;
   --foreground: #abaa96;
   --surface: #5e4535;
   --surface-deep: #8aa38d;
-  --accent: #f1caee;
-  --accent-success: #6b897d;
+  --theme-coffee-bean: #201913;
+  --theme-ash-grey: #abaa96;
+  --theme-muted-teal: #8aa38d;
+  --theme-deep-teal: #6b897d;
+  --theme-orchid-hush: #f1caee;
+  --theme-accent-success: #6b897d;
+  --accent: var(--theme-orchid-hush);
+  --accent-success: var(--theme-accent-success);
   --tech-card-clip: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
 
 html[data-theme="charcoal"] {
   --background: #141513;
+  --body-foreground: #f4f8fb;
   --foreground: #afc2d6;
   --surface: #462721;
   --surface-deep: #546564;
-  --accent: #849bac;
-  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+  --theme-coffee-bean: #141513;
+  --theme-ash-grey: #afc2d6;
+  --theme-muted-teal: #546564;
+  --theme-deep-teal: #849bac;
+  --theme-orchid-hush: #849bac;
+  --theme-accent-success: #627580;
 }
 
 html[data-theme="plum"] {
   --background: #261627;
+  --body-foreground: #f7f1f7;
   --foreground: #ebdfdc;
   --surface: #3c384d;
   --surface-deep: #4e3742;
-  --accent: #926868;
-  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+  --theme-coffee-bean: #261627;
+  --theme-ash-grey: #ebdfdc;
+  --theme-muted-teal: #4e3742;
+  --theme-deep-teal: #926868;
+  --theme-orchid-hush: #c59dc9;
+  --theme-accent-success: #8b6f7a;
 }
 
 html[data-theme="tide"] {
   --background: #35425e;
+  --body-foreground: #f4faf8;
   --foreground: #aabcaf;
   --surface: #525c79;
   --surface-deep: #6e7c8b;
-  --accent: #899c9a;
-  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+  --theme-coffee-bean: #35425e;
+  --theme-ash-grey: #aabcaf;
+  --theme-muted-teal: #6e7c8b;
+  --theme-deep-teal: #899c9a;
+  --theme-orchid-hush: #b8d6d3;
+  --theme-accent-success: #7f9592;
+}
+
+html[data-theme="default-light"] {
+  --background: #f7f5fa;
+  --body-foreground: #2c251f;
+  --foreground: #6b6258;
+  --surface: #e6ddd0;
+  --surface-deep: #d2c5b6;
+  --theme-coffee-bean: #2c251f;
+  --theme-ash-grey: #6b6258;
+  --theme-muted-teal: #6f867d;
+  --theme-deep-teal: #4f6f69;
+  --theme-orchid-hush: #6b4e86;
+  --theme-accent-success: #6f867d;
+}
+
+html[data-theme="charcoal-light"] {
+  --background: #f6f8fb;
+  --body-foreground: #1f2630;
+  --foreground: #64707d;
+  --surface: #dfe5eb;
+  --surface-deep: #c8d2dc;
+  --theme-coffee-bean: #1f2630;
+  --theme-ash-grey: #64707d;
+  --theme-muted-teal: #73879a;
+  --theme-deep-teal: #4d6579;
+  --theme-orchid-hush: #506f8d;
+  --theme-accent-success: #73879a;
+}
+
+html[data-theme="plum-light"] {
+  --background: #fbf7fb;
+  --body-foreground: #2d2330;
+  --foreground: #766a79;
+  --surface: #ebdfef;
+  --surface-deep: #d7c4e0;
+  --theme-coffee-bean: #2d2330;
+  --theme-ash-grey: #766a79;
+  --theme-muted-teal: #8a6f84;
+  --theme-deep-teal: #6c5565;
+  --theme-orchid-hush: #8b6394;
+  --theme-accent-success: #8a6f84;
+}
+
+html[data-theme="tide-light"] {
+  --background: #f4f8f8;
+  --body-foreground: #223236;
+  --foreground: #64757b;
+  --surface: #d8e5e4;
+  --surface-deep: #c0d4d0;
+  --theme-coffee-bean: #223236;
+  --theme-ash-grey: #64757b;
+  --theme-muted-teal: #6c8f8e;
+  --theme-deep-teal: #4c726f;
+  --theme-orchid-hush: #5f8aa1;
+  --theme-accent-success: #6c8f8e;
 }
 
 @theme inline {
@@ -42,19 +120,19 @@ html[data-theme="tide"] {
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-deep: var(--surface-deep);
-  --color-coffee-bean: #201913;
-  --color-ash-grey: #abaa96;
-  --color-coffee-bean2: #5e4535;
-  --color-muted-teal: #8aa38d;
-  --color-deep-teal: #6b897d;
-  --color-orchid-hush: #f1caee;
+  --color-coffee-bean: var(--theme-coffee-bean);
+  --color-ash-grey: var(--theme-ash-grey);
+  --color-coffee-bean2: var(--surface);
+  --color-muted-teal: var(--theme-muted-teal);
+  --color-deep-teal: var(--theme-deep-teal);
+  --color-orchid-hush: var(--theme-orchid-hush);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
-  color: #f7f5fa;
+  color: var(--body-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 

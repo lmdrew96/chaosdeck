@@ -151,6 +151,7 @@ export default function DeckEntriesPanel({
                   {!isCollapsed &&
                     groupEntries.map((entry) => {
                       const badge = legalityBadge(entry.card, format);
+                      const isCommanderSection = section === "commander";
                       const isCommanderSingletonViolation =
                         format === "commander" &&
                         section !== "commander" &&
@@ -189,6 +190,11 @@ export default function DeckEntriesPanel({
                                     {entry.printSetCode} #{entry.printCollectorNumber}
                                   </span>
                                 ) : null}
+                                {isCommanderSection ? (
+                                  <span className="tech-badge bg-muted-teal px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush">
+                                    singleton
+                                  </span>
+                                ) : null}
                                 {isCommanderSingletonViolation && (
                                   <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
                                     singleton
@@ -221,7 +227,9 @@ export default function DeckEntriesPanel({
                                   quantity: entry.quantity + 1,
                                 })
                               }
-                              className="tech-stepper h-7 w-7 text-sm text-orchid-hush/80"
+                              disabled={isCommanderSection && entry.quantity >= 1}
+                              title={isCommanderSection && entry.quantity >= 1 ? "Commander section allows only one copy" : undefined}
+                              className="tech-stepper h-7 w-7 text-sm text-orchid-hush/80 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               +
                             </button>

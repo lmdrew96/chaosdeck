@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 
+type DeckSection = "deck" | "sideboard" | "commander" | "companion";
+
 const deckSection = v.union(
   v.literal("deck"),
   v.literal("sideboard"),
@@ -29,6 +31,12 @@ const requireDeckAccess = async (ctx: DeckCtx, deckId: Id<"decks">) => {
     throw new Error("Unauthorized");
   }
   return { identity, deck };
+};
+
+const assertCommanderSingleton = (section: DeckSection, quantity: number) => {
+  if (section === "commander" && quantity > 1) {
+    throw new Error("Commander section allows only one copy of a card");
+  }
 };
 
 export const createDeck = mutation({
@@ -149,6 +157,7 @@ export const addCard = mutation({
         q.eq("deckId", deckId).eq("section", section).eq("cardOracleId", cardOracleId),
       )
       .unique();
+    assertCommanderSingleton(section, (existing?.quantity ?? 0) + delta);
     if (existing) {
       await ctx.db.patch(existing._id, {
         quantity: existing.quantity + delta,
@@ -188,6 +197,7 @@ export const setQuantity = mutation({
       if (existing) await ctx.db.delete(existing._id);
       return null;
     }
+    assertCommanderSingleton(section, quantity);
     if (existing) {
       await ctx.db.patch(existing._id, { quantity });
     } else {
@@ -239,6 +249,7 @@ export const moveEntry = mutation({
         q.eq("deckId", deckId).eq("section", toSection).eq("cardOracleId", cardOracleId),
       )
       .unique();
+    assertCommanderSingleton(toSection, (target?.quantity ?? 0) + source.quantity);
     if (target) {
       await ctx.db.patch(target._id, { quantity: target.quantity + source.quantity });
       await ctx.db.delete(source._id);
@@ -269,6 +280,7 @@ export const importResolvedLines = mutation({
           q.eq("deckId", deckId).eq("section", line.section).eq("cardOracleId", line.oracleId),
         )
         .unique();
+      assertCommanderSingleton(line.section, (existing?.quantity ?? 0) + line.quantity);
       if (existing) {
         await ctx.db.patch(existing._id, { quantity: existing.quantity + line.quantity });
       } else {
@@ -315,22 +327,17 @@ export const exportDeck = query({
     }
 
     const lines: string[] = [];
-    if (bySection.commander.length) {
-      lines.push("Commander");
-      for (const c of bySection.commander) lines.push(`${c.quantity} ${c.name}`);
-      lines.push("");
-    }
-    for (const c of bySection.deck) lines.push(`${c.quantity} ${c.name}`);
-    if (bySection.sideboard.length) {
-      lines.push("");
-      lines.push("Sideboard");
-      for (const c of bySection.sideboard) lines.push(`${c.quantity} ${c.name}`);
-    }
-    if (bySection.companion.length) {
-      lines.push("");
-      lines.push("Companion");
-      for (const c of bySection.companion) lines.push(`${c.quantity} ${c.name}`);
-    }
+    const pushSection = (title: string, cards: { name: string; quantity: number }[]) => {
+      if (!cards.length) return;
+      if (lines.length) lines.push("");
+      lines.push(title);
+      for (const c of cards) lines.push(`${c.quantity} ${c.name}`);
+    };
+
+    pushSection("Commander", bySection.commander);
+    pushSection("Deck", bySection.deck);
+    pushSection("Sideboard", bySection.sideboard);
+    pushSection("Companion", bySection.companion);
 
     return lines.join("\n");
   },

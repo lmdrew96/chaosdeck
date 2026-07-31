@@ -114,11 +114,12 @@ type ScryfallCard = {
 
 function toPublicCard(raw: ScryfallCard) {
   const front = raw.card_faces?.[0];
+  const cmc = raw.cmc ?? 0;
   return {
     oracleId: raw.oracle_id,
     name: raw.name,
     manaCost: raw.mana_cost ?? front?.mana_cost ?? undefined,
-    cmc: raw.cmc,
+    cmc,
     typeLine: raw.type_line ?? front?.type_line ?? undefined,
     oracleText: raw.oracle_text ?? front?.oracle_text ?? undefined,
     colors: raw.colors ?? [],

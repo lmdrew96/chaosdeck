@@ -8,9 +8,13 @@ const THEME_CHANGE_EVENT = "chaosdeck-theme-change";
 
 const THEME_OPTIONS = [
   { value: "default", label: "Original" },
+  { value: "default-light", label: "Original Light" },
   { value: "charcoal", label: "Charcoal" },
+  { value: "charcoal-light", label: "Charcoal Light" },
   { value: "plum", label: "Plum" },
+  { value: "plum-light", label: "Plum Light" },
   { value: "tide", label: "Tide" },
+  { value: "tide-light", label: "Tide Light" },
 ] as const;
 
 type ThemeValue = (typeof THEME_OPTIONS)[number]["value"];
