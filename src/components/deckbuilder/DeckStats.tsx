@@ -36,6 +36,8 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
   const curveCounts = new Array(CURVE_BUCKETS.length).fill(0);
   const colorCounts: Record<string, number> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
   let nonlandCount = 0;
+  let totalManaValue = 0;
+  let manaValueCount = 0;
 
   for (const entry of mainboard) {
     const card = entry.card;
@@ -45,6 +47,8 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
       nonlandCount += entry.quantity;
       const bucket = Math.min(Math.floor(card.cmc), 7);
       curveCounts[bucket] += entry.quantity;
+      totalManaValue += (card.cmc ?? 0) * entry.quantity;
+      manaValueCount += entry.quantity;
       for (const color of card.colors) {
         if (color in colorCounts) colorCounts[color] += entry.quantity;
       }
@@ -53,6 +57,7 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
 
   const maxCurve = Math.max(1, ...curveCounts);
   const maxColor = Math.max(1, ...Object.values(colorCounts));
+  const averageManaValue = manaValueCount > 0 ? totalManaValue / manaValueCount : 0;
 
   return (
     <div className="tech-panel flex flex-col gap-5 p-4">
@@ -62,6 +67,12 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
         <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           Mana curve ({nonlandCount} nonland cards)
         </h3>
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-ash-grey/80">
+          <span className="font-mono uppercase tracking-[0.24em] text-ash-grey/60">Average mana value</span>
+          <span className="text-sm font-semibold text-orchid-hush">
+            {averageManaValue.toFixed(1)}
+          </span>
+        </div>
         <div className="flex items-end gap-2">
           {CURVE_BUCKETS.map((label, i) => (
             <div key={label} className="flex flex-1 flex-col items-center gap-1">

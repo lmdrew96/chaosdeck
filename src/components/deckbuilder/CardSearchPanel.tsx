@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import ManaCost from "./manaCost";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
 
@@ -61,8 +62,14 @@ function CardSearchRow({
     <div className="tech-row flex flex-col justify-between gap-2 px-3 py-2 pl-4 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium text-orchid-hush">{name}</span>
-        <span className="truncate text-xs text-ash-grey/80">
-          {typeLine ?? ""} {manaCost ? `· ${manaCost}` : ""}
+        <span className="flex flex-wrap items-center gap-1 truncate text-xs text-ash-grey/80">
+          <span>{typeLine ?? ""}</span>
+          {manaCost ? (
+            <>
+              <span>·</span>
+              <ManaCost cost={manaCost} className="shrink-0" />
+            </>
+          ) : null}
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1">
