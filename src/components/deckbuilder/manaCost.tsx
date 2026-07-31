@@ -1,11 +1,11 @@
 "use client";
 
 const SYMBOL_COLORS: Record<string, string> = {
-  W: "bg-[#f7efe0] text-[#4f3b1f] border-[#d7c39c]",
-  U: "bg-[#dcecff] text-[#174a7b] border-[#8eb7e8]",
-  B: "bg-[#1f1f1f] text-[#f7f2ea] border-[#444]",
-  R: "bg-[#ffd6d6] text-[#7b1e1e] border-[#d68d8d]",
-  G: "bg-[#dff7e2] text-[#2a5f2f] border-[#97c68b]",
+  W: "bg-[#fff6eb] text-[#4f3b1f] border-[#d7c39c]",
+  U: "bg-[#0080ff] text-[#174a7b] border-[#8eb7e8]",
+  B: "bg-[#141414] text-[#f7f2ea] border-[#1f1f1f]",
+  R: "bg-[#ff0000] text-[#7b1e1e] border-[#d68d8d]",
+  G: "bg-[#00ff91] text-[#2a5f2f] border-[#97c68b]",
   X: "bg-[#ece8f7] text-[#4e3f79] border-[#b9b0d4]",
   C: "bg-[#f3ebff] text-[#5a2d9d] border-[#c8a9f0]",
   T: "bg-[#fff8c6] text-[#6b5a0f] border-[#d8c365]",
