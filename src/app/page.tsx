@@ -1,9 +1,16 @@
 "use client";
 
+import localFont from "next/font/local";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+
+const strangestShowman = localFont({
+  src: "../../Assets/fonts/StrangestShowman.ttf",
+  variable: "--font-strangest-showman",
+  display: "swap",
+});
 
 const FORMAT_OPTIONS = ["commander", "modern", "pioneer", "standard", "legacy", "pauper"];
 
@@ -29,32 +36,35 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-dark-purple px-6 py-16">
-      <main className="flex w-full max-w-2xl flex-col gap-10">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-saffron">ChaosDeck</h1>
-          <p className="mt-1 text-sm text-[#dbd5e2]">MTG deckbuilder + goldfish-plus playtester</p>
+    <div className={`flex min-h-screen flex-1 flex-col items-center bg-background px-6 py-16 ${strangestShowman.variable}`}>
+      <main className="flex w-full max-w-2xl flex-col gap-8">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ash-grey/70">MTG deckbuilder</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-orchid-hush" style={{ fontFamily: "var(--font-strangest-showman)" }}>
+            ChaosDeck
+          </h1>
+          <p className="text-sm text-ash-grey/80">Build, test, and refine the next decklist.</p>
         </div>
 
         <form
           onSubmit={handleCreate}
-          className="flex flex-col gap-3 rounded-xl bg-ultra-violet p-5 sm:flex-row sm:items-end"
+          className="flex flex-col gap-3 rounded-2xl border border-orchid-hush/15 bg-surface-deep/80 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.2)] sm:flex-row sm:items-end"
         >
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs font-medium text-[#dbd5e2]">Deck name</label>
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-orchid-hush/80">Deck name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="New deck"
-              className="rounded-md bg-dark-purple px-3 py-2 text-sm text-[#f7f5fa] outline-none ring-1 ring-white/10 focus:ring-saffron"
+              className="rounded-lg border border-white/10 bg-coffee-bean/80 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-[#dbd5e2]">Format</label>
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-orchid-hush/80">Format</label>
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="rounded-md bg-dark-purple px-3 py-2 text-sm text-[#f7f5fa] outline-none ring-1 ring-white/10 focus:ring-saffron"
+              className="rounded-lg border border-white/10 bg-coffee-bean/80 px-3 py-2 text-sm text-orchid-hush/80 outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
             >
               {FORMAT_OPTIONS.map((f) => (
                 <option key={f} value={f}>
@@ -66,33 +76,31 @@ export default function Home() {
           <button
             type="submit"
             disabled={creating || !name.trim()}
-            className="rounded-md bg-saffron px-4 py-2 text-sm font-semibold text-dark-purple transition hover:brightness-95 disabled:opacity-50"
+            className="rounded-lg bg-orchid-hush px-4 py-2 text-sm font-semibold text-coffee-bean transition hover:brightness-95 disabled:opacity-50"
           >
             Create deck
           </button>
         </form>
 
         <div className="flex flex-col gap-2">
-          {decks === undefined && <p className="text-sm text-[#dbd5e2]">Loading decks…</p>}
+          {decks === undefined && <p className="text-sm text-ash-grey/80">Loading decks…</p>}
           {decks?.length === 0 && (
-            <p className="text-sm text-[#dbd5e2]">No decks yet — create one above to get started.</p>
+            <p className="text-sm text-ash-grey/80">No decks yet — create one above to get started.</p>
           )}
           {decks?.map((deck) => (
             <div
               key={deck._id}
-              className="flex items-center justify-between rounded-lg bg-ultra-violet px-4 py-3"
+              className="flex items-center justify-between rounded-xl border border-orchid-hush/10 bg-deep-teal/80 px-4 py-3 shadow-sm"
             >
               <Link href={`/decks/${deck._id}`} className="flex flex-col">
-                <span className="font-medium text-[#f7f5fa]">{deck.name}</span>
-                <span className="text-xs uppercase tracking-wide text-saffron">
-                  {deck.format}
-                </span>
+                <span className="font-medium text-orchid-hush">{deck.name}</span>
+                <span className="text-xs uppercase tracking-[0.24em] text-ash-grey/80">{deck.format}</span>
               </Link>
               <button
                 onClick={() => {
                   if (confirm(`Delete "${deck.name}"?`)) void deleteDeck({ deckId: deck._id });
                 }}
-                className="text-xs text-[#dbd5e2] hover:text-saffron"
+                className="text-xs text-orchid-hush/80 hover:text-orchid-hush"
               >
                 Delete
               </button>
