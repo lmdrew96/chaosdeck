@@ -47,7 +47,7 @@ export default function Home() {
           <h1 className="text-5xl font-semibold tracking-tight text-orchid-hush sm:text-6xl" style={{ fontFamily: "var(--font-strangest-showman)" }}>
             ChaosDeck
           </h1>
-          <p className="text-sm text-ash-grey/80">Build, test, and refine the next decklist.</p>
+          <p className="text-sm text-ash-grey/80">Build, test, and refine your next decklist</p>
         </div>
 
         <div className="tech-panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
