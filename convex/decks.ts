@@ -130,11 +130,19 @@ export const addCard = mutation({
     section: deckSection,
     cardOracleId: v.string(),
     quantity: v.optional(v.number()),
+    printSetCode: v.optional(v.string()),
+    printCollectorNumber: v.optional(v.string()),
+    printImageUri: v.optional(v.string()),
+    printScryfallUri: v.optional(v.string()),
   },
   returns: v.null(),
-  handler: async (ctx, { deckId, section, cardOracleId, quantity }) => {
+  handler: async (ctx, { deckId, section, cardOracleId, quantity, printSetCode, printCollectorNumber, printImageUri, printScryfallUri }) => {
     await requireDeckAccess(ctx, deckId);
     const delta = quantity ?? 1;
+    const printFields =
+      printSetCode || printCollectorNumber || printImageUri || printScryfallUri
+        ? { printSetCode, printCollectorNumber, printImageUri, printScryfallUri }
+        : null;
     const existing = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck_and_section_and_card", (q) =>
@@ -142,9 +150,18 @@ export const addCard = mutation({
       )
       .unique();
     if (existing) {
-      await ctx.db.patch(existing._id, { quantity: existing.quantity + delta });
+      await ctx.db.patch(existing._id, {
+        quantity: existing.quantity + delta,
+        ...(printFields ?? {}),
+      });
     } else {
-      await ctx.db.insert("deckEntries", { deckId, section, cardOracleId, quantity: delta });
+      await ctx.db.insert("deckEntries", {
+        deckId,
+        section,
+        cardOracleId,
+        quantity: delta,
+        ...(printFields ?? {}),
+      });
     }
     return null;
   },

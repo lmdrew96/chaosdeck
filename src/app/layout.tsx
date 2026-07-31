@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import ThemeSelector from "@/components/ThemeSelector";
+import Script from "next/script";
 import "./globals.css";
 
 const elevatia = localFont({
@@ -32,12 +34,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${elevatia.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${elevatia.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-background" style={{ fontFamily: "var(--font-elevatia)" }}>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            (function () {
+              try {
+                var theme = window.localStorage.getItem("chaosdeck-theme");
+                var validThemes = ["default", "charcoal", "plum", "tide"];
+                if (validThemes.indexOf(theme) === -1) return;
+                if (theme === "default") {
+                  document.documentElement.removeAttribute("data-theme");
+                } else {
+                  document.documentElement.setAttribute("data-theme", theme);
+                }
+              } catch (error) {}
+            })();
+          `}
+        </Script>
         <ClerkProvider>
+          <ThemeSelector />
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
       </body>

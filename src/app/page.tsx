@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import CardBrowser from "@/components/cards/CardBrowser";
 
 const strangestShowman = localFont({
   src: "../../Assets/fonts/StrangestShowman.ttf",
@@ -126,6 +127,12 @@ export default function Home() {
         <div className="flex flex-col gap-2">
           {!isSignedIn && isClerkLoaded && !isConvexAuthLoading && (
             <p className="text-sm text-ash-grey/80">Sign in to view or create your personal deck library.</p>
+          )}
+          {!isSignedIn && isClerkLoaded && !isConvexAuthLoading && (
+            <CardBrowser
+              title="Public card search"
+              description="Search cards without logging in, preview art on hover, and open printings or rulings from the modal."
+            />
           )}
           {isConvexAuthLoading && <p className="text-sm text-ash-grey/80">Loading decks…</p>}
           {isSignedIn && isClerkLoaded && isAuthenticated && decks === undefined && <p className="text-sm text-ash-grey/80">Loading decks…</p>}

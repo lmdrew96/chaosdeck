@@ -79,6 +79,10 @@ export default defineSchema({
     section: deckSection,
     cardOracleId: v.string(),
     quantity: v.number(),
+    printSetCode: v.optional(v.string()),
+    printCollectorNumber: v.optional(v.string()),
+    printImageUri: v.optional(v.string()),
+    printScryfallUri: v.optional(v.string()),
   })
     .index("by_deck", ["deckId"])
     .index("by_deck_and_section_and_card", ["deckId", "section", "cardOracleId"]),

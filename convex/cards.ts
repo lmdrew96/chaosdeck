@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { action, internalMutation, query } from "./_generated/server";
 
 const taggedClause = v.object({
   tag: v.string(),
@@ -16,6 +16,38 @@ const cardFace = v.object({
   loyalty: v.optional(v.string()),
   imageUri: v.optional(v.string()),
   tags: v.array(taggedClause),
+});
+
+const publicCardFace = cardFace.omit("tags");
+
+const publicCard = v.object({
+  oracleId: v.string(),
+  name: v.string(),
+  manaCost: v.optional(v.string()),
+  cmc: v.number(),
+  typeLine: v.optional(v.string()),
+  oracleText: v.optional(v.string()),
+  colors: v.array(v.string()),
+  colorIdentity: v.array(v.string()),
+  power: v.optional(v.string()),
+  toughness: v.optional(v.string()),
+  loyalty: v.optional(v.string()),
+  rarity: v.string(),
+  setCode: v.string(),
+  setName: v.string(),
+  collectorNumber: v.string(),
+  releasedAt: v.optional(v.string()),
+  imageUri: v.optional(v.string()),
+  legalities: v.record(v.string(), v.string()),
+  priceUsd: v.optional(v.string()),
+  scryfallUri: v.string(),
+  keywords: v.array(v.string()),
+  cardFaces: v.optional(v.array(publicCardFace)),
+});
+
+const ruling = v.object({
+  publishedAt: v.string(),
+  comment: v.string(),
 });
 
 const cardFields = {
@@ -41,6 +73,98 @@ const cardFields = {
   tags: v.array(taggedClause),
   cardFaces: v.optional(v.array(cardFace)),
 };
+
+type ScryfallCardFace = {
+  name: string;
+  mana_cost?: string;
+  type_line?: string;
+  oracle_text?: string;
+  power?: string;
+  toughness?: string;
+  loyalty?: string;
+  image_uris?: { normal?: string };
+};
+
+type ScryfallCard = {
+  oracle_id: string;
+  name: string;
+  layout: string;
+  mana_cost?: string;
+  cmc: number;
+  type_line?: string;
+  oracle_text?: string;
+  colors?: string[];
+  color_identity: string[];
+  power?: string;
+  toughness?: string;
+  loyalty?: string;
+  rarity: string;
+  set: string;
+  set_name: string;
+  collector_number: string;
+  released_at?: string;
+  image_uris?: { normal?: string };
+  legalities: Record<string, string>;
+  prices?: { usd?: string | null };
+  scryfall_uri: string;
+  keywords?: string[];
+  card_faces?: ScryfallCardFace[];
+  rulings_uri?: string;
+};
+
+function toPublicCard(raw: ScryfallCard) {
+  const front = raw.card_faces?.[0];
+  return {
+    oracleId: raw.oracle_id,
+    name: raw.name,
+    manaCost: raw.mana_cost ?? front?.mana_cost ?? undefined,
+    cmc: raw.cmc,
+    typeLine: raw.type_line ?? front?.type_line ?? undefined,
+    oracleText: raw.oracle_text ?? front?.oracle_text ?? undefined,
+    colors: raw.colors ?? [],
+    colorIdentity: raw.color_identity ?? [],
+    power: raw.power ?? front?.power ?? undefined,
+    toughness: raw.toughness ?? front?.toughness ?? undefined,
+    loyalty: raw.loyalty ?? front?.loyalty ?? undefined,
+    rarity: raw.rarity,
+    setCode: raw.set,
+    setName: raw.set_name,
+    collectorNumber: raw.collector_number,
+    releasedAt: raw.released_at ?? undefined,
+    imageUri: raw.image_uris?.normal ?? front?.image_uris?.normal ?? undefined,
+    legalities: raw.legalities ?? {},
+    priceUsd: raw.prices?.usd ?? undefined,
+    scryfallUri: raw.scryfall_uri,
+    keywords: raw.keywords ?? [],
+    cardFaces: raw.card_faces?.map((face) => ({
+      name: face.name,
+      manaCost: face.mana_cost ?? undefined,
+      typeLine: face.type_line ?? undefined,
+      oracleText: face.oracle_text ?? undefined,
+      power: face.power ?? undefined,
+      toughness: face.toughness ?? undefined,
+      loyalty: face.loyalty ?? undefined,
+      imageUri: face.image_uris?.normal ?? undefined,
+    })),
+  };
+}
+
+async function fetchScryfallSearch(query: string, unique: "cards" | "prints") {
+  const res = await fetch(
+    `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=${unique}&order=released&dir=desc`,
+    {
+      headers: { "User-Agent": "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)", Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) {
+    return [];
+  }
+  if (!res.ok) {
+    throw new Error(`Scryfall search failed: ${res.status}`);
+  }
+  const data = (await res.json()) as { data?: ScryfallCard[] };
+  return data.data ?? [];
+}
 
 // Upserts by oracleId so a daily refresh never leaves the table momentarily
 // empty for readers — existing rows are patched in place, new ones inserted.
@@ -95,5 +219,53 @@ export const findExactByName = query({
       .take(20);
     const target = name.trim().toLowerCase();
     return candidates.find((c) => c.name.toLowerCase() === target) ?? null;
+  },
+});
+
+export const searchCards = action({
+  args: { query: v.string() },
+  returns: v.array(publicCard),
+  handler: async (_, { query }) => {
+    const cards = await fetchScryfallSearch(query, "cards");
+    return cards.slice(0, 24).map(toPublicCard);
+  },
+});
+
+export const getCardPrintings = action({
+  args: { oracleId: v.string() },
+  returns: v.object({
+    oracleId: v.string(),
+    name: v.string(),
+    printings: v.array(publicCard),
+    rulings: v.array(ruling),
+  }),
+  handler: async (_, { oracleId }) => {
+    const printings = await fetchScryfallSearch(`oracleid:${oracleId}`, "prints");
+    if (printings.length === 0) {
+      throw new Error("Scryfall printings not found");
+    }
+
+    let rulings: Array<{ publishedAt: string; comment: string }> = [];
+    const first = printings[0];
+    if (first.rulings_uri) {
+      const rulingsRes = await fetch(first.rulings_uri, {
+        headers: { "User-Agent": "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)", Accept: "application/json" },
+      });
+      if (!rulingsRes.ok) {
+        throw new Error(`Scryfall rulings fetch failed: ${rulingsRes.status}`);
+      }
+      const rulingsData = (await rulingsRes.json()) as { data?: Array<{ published_at: string; comment: string }> };
+      rulings = (rulingsData.data ?? []).map((rulingItem) => ({
+        publishedAt: rulingItem.published_at,
+        comment: rulingItem.comment,
+      }));
+    }
+
+    return {
+      oracleId,
+      name: first.name,
+      printings: printings.map(toPublicCard),
+      rulings,
+    };
   },
 });

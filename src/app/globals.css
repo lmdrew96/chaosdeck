@@ -10,6 +10,33 @@
   --tech-card-clip: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
 
+html[data-theme="charcoal"] {
+  --background: #141513;
+  --foreground: #afc2d6;
+  --surface: #462721;
+  --surface-deep: #546564;
+  --accent: #849bac;
+  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+}
+
+html[data-theme="plum"] {
+  --background: #261627;
+  --foreground: #ebdfdc;
+  --surface: #3c384d;
+  --surface-deep: #4e3742;
+  --accent: #926868;
+  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+}
+
+html[data-theme="tide"] {
+  --background: #35425e;
+  --foreground: #aabcaf;
+  --surface: #525c79;
+  --surface-deep: #6e7c8b;
+  --accent: #899c9a;
+  --accent-success: color-mix(in srgb, var(--accent) 54%, var(--surface-deep));
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

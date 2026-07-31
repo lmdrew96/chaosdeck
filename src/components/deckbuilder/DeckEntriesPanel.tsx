@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -160,26 +161,40 @@ export default function DeckEntriesPanel({
                           key={entry._id}
                           className="tech-row flex flex-col gap-2 px-3 py-2 pl-5 xl:flex-row xl:items-center"
                         >
-                          <div className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-sm font-medium text-orchid-hush">
-                              {entry.card?.name ?? "(unknown card)"}
-                            </span>
-                            <div className="flex flex-wrap items-center gap-1">
-                              {badge && (
-                                <span className={`tech-badge px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase ${badge.className}`}>
-                                  {badge.label}
-                                </span>
-                              )}
-                              {entry.card?.manaCost ? (
-                                <span className="tech-badge flex items-center gap-1 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ash-grey/80">
-                                  <ManaCost cost={entry.card.manaCost} />
-                                </span>
-                              ) : null}
-                              {isCommanderSingletonViolation && (
-                                <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
-                                  singleton
-                                </span>
-                              )}
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            {(entry.printImageUri ?? entry.card?.imageUri) ? (
+                              <img
+                                src={entry.printImageUri ?? entry.card?.imageUri}
+                                alt={entry.card?.name ?? "Card image"}
+                                className="hidden h-20 w-14 shrink-0 rounded-[3px] border border-orchid-hush/20 object-cover shadow-[0_10px_24px_rgba(0,0,0,0.18)] sm:block"
+                              />
+                            ) : null}
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate text-sm font-medium text-orchid-hush">
+                                {entry.card?.name ?? "(unknown card)"}
+                              </span>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {badge && (
+                                  <span className={`tech-badge px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase ${badge.className}`}>
+                                    {badge.label}
+                                  </span>
+                                )}
+                                {entry.card?.manaCost ? (
+                                  <span className="tech-badge flex items-center gap-1 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ash-grey/80">
+                                    <ManaCost cost={entry.card.manaCost} />
+                                  </span>
+                                ) : null}
+                                {entry.printSetCode ? (
+                                  <span className="tech-badge px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ash-grey/80">
+                                    {entry.printSetCode} #{entry.printCollectorNumber}
+                                  </span>
+                                ) : null}
+                                {isCommanderSingletonViolation && (
+                                  <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
+                                    singleton
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="flex shrink-0 flex-wrap items-center gap-1">

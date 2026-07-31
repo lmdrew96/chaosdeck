@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import CardSearchPanel from "@/components/deckbuilder/CardSearchPanel";
@@ -15,23 +15,46 @@ const FORMAT_OPTIONS = ["commander", "modern", "pioneer", "standard", "legacy", 
 export default function DeckBuilderPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const id = deckId as Id<"decks">;
+  const { isAuthenticated, isLoading: isConvexAuthLoading } = useConvexAuth();
 
-  const deck = useQuery(api.decks.getDeck, { deckId: id });
+  const deck = useQuery(api.decks.getDeck, isAuthenticated ? { deckId: id } : "skip");
   const setFormat = useMutation(api.decks.setFormat);
   const renameDeck = useMutation(api.decks.renameDeck);
 
-  if (deck === undefined) {
-    return (
-      <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
-        <div className="tech-panel px-6 py-5 text-sm text-ash-grey/80">Loading deck…</div>
-      </div>
-    );
+  if (isConvexAuthLoading || (!isAuthenticated && deck === undefined)) {
+   return (
+     <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
+       <div className="tech-panel px-6 py-5 text-sm text-ash-grey/80">Loading session…</div>
+     </div>
+   );
   }
+
+  if (!isAuthenticated) {
+   return (
+     <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
+       <div className="tech-panel flex flex-col gap-3 px-6 py-5 text-sm text-ash-grey/80">
+         <p>Sign in to open this deck.</p>
+         <Link href="/sign-in" className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+           Sign in
+         </Link>
+       </div>
+     </div>
+   );
+  }
+
+  if (deck === undefined) {
+   return (
+     <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
+       <div className="tech-panel px-6 py-5 text-sm text-ash-grey/80">Loading deck…</div>
+     </div>
+   );
+  }
+
   if (deck === null) {
-    return (
-      <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
-        <div className="tech-panel px-6 py-5 text-sm text-ash-grey/80">Deck not found.</div>
-      </div>
+   return (
+     <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
+       <div className="tech-panel px-6 py-5 text-sm text-ash-grey/80">Deck not found.</div>
+     </div>
     );
   }
 
