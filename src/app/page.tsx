@@ -48,7 +48,7 @@ export default function Home() {
 
         <form
           onSubmit={handleCreate}
-          className="flex flex-col gap-3 rounded-2xl border border-orchid-hush/15 bg-surface-deep/80 p-5 shadow-[0_20px_45px_rgba(0,0,0,0.2)] sm:flex-row sm:items-end"
+          className="flex flex-col gap-3 rounded-[14px] border border-orchid-hush/20 bg-surface-deep/90 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.28)] sm:flex-row sm:items-end"
         >
           <div className="flex flex-1 flex-col gap-1">
             <label className="text-xs font-medium uppercase tracking-[0.2em] text-orchid-hush/80">Deck name</label>
@@ -56,7 +56,7 @@ export default function Home() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="New deck"
-              className="rounded-lg border border-white/10 bg-coffee-bean/80 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
+              className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -64,7 +64,7 @@ export default function Home() {
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="rounded-lg border border-white/10 bg-coffee-bean/80 px-3 py-2 text-sm text-orchid-hush/80 outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
+              className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush/80 outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
             >
               {FORMAT_OPTIONS.map((f) => (
                 <option key={f} value={f}>
@@ -76,7 +76,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={creating || !name.trim()}
-            className="rounded-lg bg-orchid-hush px-4 py-2 text-sm font-semibold text-coffee-bean transition hover:brightness-95 disabled:opacity-50"
+            className="rounded-[10px] bg-orchid-hush px-4 py-2 text-sm font-semibold text-coffee-bean transition hover:brightness-95 hover:shadow-[0_0_0_1px_rgba(241,202,238,0.4)] disabled:opacity-50"
           >
             Create deck
           </button>
@@ -90,7 +90,7 @@ export default function Home() {
           {decks?.map((deck) => (
             <div
               key={deck._id}
-              className="flex items-center justify-between rounded-xl border border-orchid-hush/10 bg-deep-teal/80 px-4 py-3 shadow-sm"
+              className="flex items-center justify-between rounded-[12px] border border-orchid-hush/15 bg-deep-teal/90 px-4 py-3 shadow-[0_6px_18px_rgba(0,0,0,0.16)]"
             >
               <Link href={`/decks/${deck._id}`} className="flex flex-col">
                 <span className="font-medium text-orchid-hush">{deck.name}</span>

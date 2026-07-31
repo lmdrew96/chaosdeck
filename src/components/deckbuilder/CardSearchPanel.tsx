@@ -15,20 +15,20 @@ export default function CardSearchPanel({ deckId }: { deckId: Id<"decks"> }) {
   const addCard = useMutation(api.decks.addCard);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-ultra-violet p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-saffron">Card search</h2>
+    <div className="flex flex-col gap-3 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.18)]">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-orchid-hush">Card search</h2>
       <input
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         placeholder="Search by name…"
-        className="rounded-md bg-dark-purple px-3 py-2 text-sm text-[#f7f5fa] outline-none ring-1 ring-white/10 focus:ring-saffron"
+        className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
       />
       <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto">
         {term.trim() && results === undefined && (
-          <p className="text-xs text-[#dbd5e2]">Searching…</p>
+          <p className="text-xs text-ash-grey/80">Searching…</p>
         )}
         {term.trim() && results?.length === 0 && (
-          <p className="text-xs text-[#dbd5e2]">No cards found.</p>
+          <p className="text-xs text-ash-grey/80">No cards found.</p>
         )}
         {results?.map((card) => (
           <CardSearchRow
@@ -58,10 +58,10 @@ function CardSearchRow({
   const [section, setSection] = useState<Section>("deck");
 
   return (
-    <div className="flex items-center justify-between gap-2 rounded-md bg-dark-purple px-3 py-2">
+    <div className="flex items-center justify-between gap-2 rounded-[10px] border border-white/10 bg-coffee-bean/80 px-3 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.14)]">
       <div className="flex min-w-0 flex-col">
-        <span className="truncate text-sm font-medium text-[#f7f5fa]">{name}</span>
-        <span className="truncate text-xs text-[#dbd5e2]">
+        <span className="truncate text-sm font-medium text-orchid-hush">{name}</span>
+        <span className="truncate text-xs text-ash-grey/80">
           {typeLine ?? ""} {manaCost ? `· ${manaCost}` : ""}
         </span>
       </div>
@@ -69,7 +69,7 @@ function CardSearchRow({
         <select
           value={section}
           onChange={(e) => setSection(e.target.value as Section)}
-          className="rounded bg-ultra-violet px-1 py-1 text-xs text-[#f7f5fa] outline-none"
+          className="rounded-[8px] border border-white/10 bg-deep-teal/90 px-1 py-1 text-xs text-orchid-hush/80 outline-none"
         >
           {SECTIONS.map((s) => (
             <option key={s} value={s}>
@@ -79,7 +79,7 @@ function CardSearchRow({
         </select>
         <button
           onClick={() => onAdd(section)}
-          className="rounded bg-saffron px-2 py-1 text-xs font-semibold text-dark-purple hover:brightness-95"
+          className="rounded-[8px] bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean hover:bg-orchid-hush/90 hover:brightness-95"
         >
           Add
         </button>

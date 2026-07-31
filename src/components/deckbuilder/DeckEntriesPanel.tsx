@@ -19,10 +19,10 @@ type HydratedEntry = Doc<"deckEntries"> & { card: Doc<"cards"> | null };
 function legalityBadge(card: Doc<"cards"> | null, format: string) {
   if (!card) return null;
   const status = card.legalities[format];
-  if (!status) return { label: "unknown", className: "bg-white/10 text-[#dbd5e2]" };
-  if (status === "legal") return { label: "legal", className: "bg-hunter-green text-[#f7f5fa]" };
-  if (status === "restricted") return { label: "restricted", className: "bg-saffron text-dark-purple" };
-  return { label: status.replace("_", " "), className: "bg-[#7a2f2f] text-[#f7f5fa]" };
+  if (!status) return { label: "unknown", className: "bg-surface text-ash-grey/80" };
+  if (status === "legal") return { label: "legal", className: "bg-muted-teal text-orchid-hush" };
+  if (status === "restricted") return { label: "restricted", className: "bg-orchid-hush text-coffee-bean" };
+  return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-orchid-hush/80" };
 }
 
 export default function DeckEntriesPanel({
@@ -38,7 +38,7 @@ export default function DeckEntriesPanel({
   const moveEntry = useMutation(api.decks.moveEntry);
 
   if (entries === undefined) {
-    return <p className="text-sm text-[#dbd5e2]">Loading deck…</p>;
+    return <p className="text-sm text-orchid-hush/80">Loading deck…</p>;
   }
 
   const bySection: Record<Section, HydratedEntry[]> = {
@@ -53,12 +53,12 @@ export default function DeckEntriesPanel({
     bySection[section].reduce((sum, e) => sum + e.quantity, 0);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-ultra-violet p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-saffron">Deck list</h2>
+    <div className="flex flex-col gap-4 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.18)]">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-orchid-hush">Deck list</h2>
       {SECTION_ORDER.map((section) =>
         bySection[section].length === 0 ? null : (
           <div key={section} className="flex flex-col gap-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#dbd5e2]">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
               {SECTION_LABEL[section]} ({totalCount(section)})
             </h3>
             {bySection[section]
@@ -74,10 +74,10 @@ export default function DeckEntriesPanel({
                 return (
                   <div
                     key={entry._id}
-                    className="flex items-center gap-2 rounded-md bg-dark-purple px-3 py-2"
+                    className="flex items-center gap-2 rounded-[10px] border border-white/10 bg-coffee-bean/80 px-3 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.14)]"
                   >
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-sm font-medium text-[#f7f5fa]">
+                      <span className="truncate text-sm font-medium text-orchid-hush">
                         {entry.card?.name ?? "(unknown card)"}
                       </span>
                       <div className="flex flex-wrap items-center gap-1">
@@ -87,7 +87,7 @@ export default function DeckEntriesPanel({
                           </span>
                         )}
                         {isCommanderSingletonViolation && (
-                          <span className="rounded bg-[#7a2f2f] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[#f7f5fa]">
+                          <span className="rounded bg-[#cc2e6d] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-orchid-hush/80">
                             singleton
                           </span>
                         )}
@@ -103,11 +103,11 @@ export default function DeckEntriesPanel({
                             quantity: entry.quantity - 1,
                           })
                         }
-                        className="h-6 w-6 rounded bg-ultra-violet text-sm text-[#f7f5fa] hover:brightness-110"
+                        className="h-6 w-6 rounded-[8px] bg-deep-teal/90 text-sm text-orchid-hush/80 hover:brightness-110"
                       >
                         −
                       </button>
-                      <span className="w-5 text-center text-sm text-[#f7f5fa]">{entry.quantity}</span>
+                      <span className="w-5 text-center text-sm text-orchid-hush">{entry.quantity}</span>
                       <button
                         onClick={() =>
                           void setQuantity({
@@ -117,7 +117,7 @@ export default function DeckEntriesPanel({
                             quantity: entry.quantity + 1,
                           })
                         }
-                        className="h-6 w-6 rounded bg-ultra-violet text-sm text-[#f7f5fa] hover:brightness-110"
+                        className="h-6 w-6 rounded-[8px] bg-deep-teal/90 text-sm text-orchid-hush/80 hover:brightness-110"
                       >
                         +
                       </button>
@@ -131,7 +131,7 @@ export default function DeckEntriesPanel({
                             toSection: e.target.value as Section,
                           })
                         }
-                        className="rounded bg-ultra-violet px-1 py-1 text-xs text-[#f7f5fa] outline-none"
+                        className="rounded-[8px] border border-white/10 bg-deep-teal/90 px-1 py-1 text-xs text-orchid-hush outline-none"
                       >
                         {SECTION_ORDER.map((s) => (
                           <option key={s} value={s}>
@@ -141,7 +141,7 @@ export default function DeckEntriesPanel({
                       </select>
                       <button
                         onClick={() => void removeCard({ deckId, section, cardOracleId: entry.cardOracleId })}
-                        className="text-xs text-[#dbd5e2] hover:text-saffron"
+                        className="text-xs text-ash-grey/80 transition hover:text-orchid-hush"
                       >
                         ✕
                       </button>
@@ -153,7 +153,7 @@ export default function DeckEntriesPanel({
         ),
       )}
       {entries.length === 0 && (
-        <p className="text-sm text-[#dbd5e2]">No cards yet — search or import to add some.</p>
+        <p className="text-sm text-ash-grey/80">No cards yet — search or import to add some.</p>
       )}
     </div>
   );

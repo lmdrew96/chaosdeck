@@ -21,29 +21,29 @@ export default function DeckBuilderPage() {
   const renameDeck = useMutation(api.decks.renameDeck);
 
   if (deck === undefined) {
-    return <p className="p-8 text-sm text-[#dbd5e2]">Loading deck…</p>;
+    return <p className="p-8 text-sm text-orchid-hush/80">Loading deck…</p>;
   }
   if (deck === null) {
-    return <p className="p-8 text-sm text-[#dbd5e2]">Deck not found.</p>;
+    return <p className="p-8 text-sm text-orchid-hush/80">Deck not found.</p>;
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 bg-dark-purple px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-h-screen flex-1 flex-col gap-6 bg-background px-6 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 px-4 py-4 shadow-[0_10px_32px_rgba(0,0,0,0.24)]">
         <div className="flex flex-col gap-1">
-          <Link href="/" className="text-xs text-[#dbd5e2] hover:text-saffron">
+          <Link href="/" className="text-xs text-ash-grey/80 transition hover:text-orchid-hush">
             ← All decks
           </Link>
           <input
             value={deck.name}
             onChange={(e) => void renameDeck({ deckId: id, name: e.target.value })}
-            className="bg-transparent text-2xl font-semibold text-saffron outline-none"
+            className="bg-transparent text-2xl font-semibold text-orchid-hush outline-none"
           />
         </div>
         <select
           value={deck.format}
           onChange={(e) => void setFormat({ deckId: id, format: e.target.value })}
-          className="rounded-md bg-ultra-violet px-3 py-2 text-sm text-[#f7f5fa] outline-none"
+          className="rounded-[10px] border border-white/10 bg-deep-teal/90 px-3 py-2 text-sm text-orchid-hush/80 outline-none"
         >
           {FORMAT_OPTIONS.map((f) => (
             <option key={f} value={f}>
