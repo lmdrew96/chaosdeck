@@ -25,7 +25,7 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
   const entries = useQuery(api.decks.listEntriesWithCards, { deckId });
 
   if (entries === undefined) {
-    return <p className="text-sm text-ash-grey/80">Loading stats…</p>;
+    return <div className="tech-panel p-4 text-sm text-ash-grey/80">Loading stats…</div>;
   }
 
   // Mana curve + color stats reflect what actually gets shuffled into the
@@ -55,45 +55,45 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
   const maxColor = Math.max(1, ...Object.values(colorCounts));
 
   return (
-   <div className="flex flex-col gap-5 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.18)]">
-     <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-orchid-hush">Deck stats</h2>
+    <div className="tech-panel flex flex-col gap-5 p-4">
+      <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">Deck stats</h2>
 
       <div>
-       <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
+        <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           Mana curve ({nonlandCount} nonland cards)
         </h3>
         <div className="flex items-end gap-2">
           {CURVE_BUCKETS.map((label, i) => (
             <div key={label} className="flex flex-1 flex-col items-center gap-1">
-              <div className="flex h-24 w-full items-end">
+              <div className="tech-meter flex h-24 w-full items-end overflow-hidden rounded-[3px]">
                 <div
-                  className="w-full rounded-t bg-orchid-hush"
+                  className="w-full bg-orchid-hush shadow-[0_0_14px_rgba(241,202,238,0.38)]"
                   style={{ height: `${(curveCounts[i] / maxCurve) * 100}%` }}
                   title={`${curveCounts[i]} cards`}
                 />
               </div>
-              <span className="text-[10px] text-ash-grey/80">{label}</span>
-              <span className="text-[10px] text-orchid-hush">{curveCounts[i]}</span>
+              <span className="font-mono text-[10px] text-ash-grey/80">{label}</span>
+              <span className="font-mono text-[10px] text-orchid-hush">{curveCounts[i]}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
+        <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           Color breakdown
         </h3>
         <div className="flex flex-col gap-1">
           {Object.entries(colorCounts).map(([color, count]) => (
             <div key={color} className="flex items-center gap-2">
               <span
-                className="h-3 w-3 shrink-0 rounded-full border border-orchid-hush/20"
+                className="h-3 w-3 shrink-0 rounded-[3px] border border-orchid-hush/20 shadow-[0_0_10px_rgba(241,202,238,0.14)]"
                 style={{ backgroundColor: COLOR_SWATCH[color] }}
               />
               <span className="w-12 shrink-0 text-xs text-ash-grey/80">{COLOR_LABEL[color]}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface/70">
+              <div className="tech-meter h-2 flex-1 overflow-hidden rounded-[3px]">
                 <div
-                  className="h-full rounded-full"
+                  className="h-full rounded-[2px]"
                   style={{
                     width: `${(count / maxColor) * 100}%`,
                     backgroundColor: COLOR_SWATCH[color],

@@ -64,11 +64,11 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.18)]">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-orchid-hush">Import / export</h2>
+    <div className="tech-panel flex flex-col gap-4 p-4">
+      <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">Import / export</h2>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
+      <div className="flex flex-col gap-3">
+        <h3 className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           Paste a decklist
         </h3>
         <textarea
@@ -76,13 +76,13 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
           onChange={(e) => setPasted(e.target.value)}
           rows={6}
           placeholder={"4 Lightning Bolt\nSideboard\n2 Rest in Peace"}
-          className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
+          className="tech-control min-h-32 px-3 py-2 text-sm text-orchid-hush outline-none transition"
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => void handleResolve()}
             disabled={busy || !pasted.trim()}
-            className="rounded-[10px] bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean hover:brightness-95 disabled:opacity-50"
+            className="tech-button bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
           >
             Resolve cards
           </button>
@@ -90,18 +90,18 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
             <button
               onClick={() => void handleConfirm()}
               disabled={busy}
-              className="rounded-[10px] bg-muted-teal px-3 py-1.5 text-xs font-semibold text-orchid-hush hover:brightness-110 disabled:opacity-50"
+              className="tech-button bg-deep-teal/80 px-3 py-1.5 text-xs font-semibold text-orchid-hush disabled:opacity-50"
             >
               Add {resolved.length} resolved to deck
             </button>
           )}
         </div>
 
-        {imported && <p className="text-xs text-muted-teal">Imported.</p>}
+        {imported && <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-teal">Imported.</p>}
 
         {resolved && (
-          <div className="flex flex-col gap-1 rounded-[10px] border border-white/10 bg-coffee-bean/80 p-2">
-            <p className="text-xs text-ash-grey/80">{resolved.length} resolved</p>
+          <div className="tech-row flex flex-col gap-2 px-3 py-2 pl-4">
+            <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-ash-grey/80">{resolved.length} resolved</p>
             {unresolved.length > 0 && (
               <div className="flex flex-col gap-1">
                 <p className="text-xs font-semibold text-orchid-hush">{unresolved.length} unresolved</p>
@@ -117,18 +117,18 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">Export</h3>
+      <div className="flex flex-col gap-3">
+        <h3 className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">Export</h3>
         <textarea
           readOnly
           value={exportText ?? ""}
           rows={6}
-          className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush outline-none"
+          className="tech-control min-h-32 px-3 py-2 text-sm text-orchid-hush outline-none"
         />
         <button
           onClick={() => exportText && void navigator.clipboard.writeText(exportText)}
           disabled={!exportText}
-          className="w-fit rounded-[10px] bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean hover:brightness-95 disabled:opacity-50"
+          className="tech-button w-fit bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
         >
           Copy to clipboard
         </button>
