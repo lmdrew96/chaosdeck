@@ -29,3 +29,182 @@ body {
   color: #f7f5fa;
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 48%, transparent);
+  color: var(--background);
+}
+
+.tech-page {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 14% 8%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 28rem),
+    radial-gradient(circle at 84% 18%, color-mix(in srgb, var(--accent-success) 18%, transparent), transparent 24rem),
+    linear-gradient(color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px);
+  background-size: auto, auto, 42px 42px, 42px 42px;
+}
+
+.tech-page::before {
+  content: "";
+  position: fixed;
+  inset: 18px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 8px;
+  opacity: 0.7;
+}
+
+.tech-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-deep) 82%, var(--background)), color-mix(in srgb, var(--surface-deep) 62%, var(--background))),
+    var(--surface-deep);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent),
+    inset 0 24px 42px color-mix(in srgb, var(--background) 18%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.tech-panel::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 6px;
+  clip-path: polygon(0 0, calc(50% - 34px) 0, calc(50% - 24px) 10px, calc(50% + 24px) 10px, calc(50% + 34px) 0, 100% 0, 100% 100%, calc(50% + 34px) 100%, calc(50% + 24px) calc(100% - 10px), calc(50% - 24px) calc(100% - 10px), calc(50% - 34px) 100%, 0 100%);
+  opacity: 0.68;
+}
+
+.tech-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 14px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 35%, transparent), transparent);
+  opacity: 0.7;
+}
+
+.tech-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tech-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--accent);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.tech-panel-title::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, transparent), transparent);
+}
+
+.tech-control {
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--background) 84%, transparent), color-mix(in srgb, var(--surface) 74%, var(--background))),
+    var(--background);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent),
+    inset 0 12px 22px color-mix(in srgb, var(--background) 28%, transparent);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.tech-control:focus {
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.tech-button {
+  min-height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  box-shadow:
+    inset 0 -4px 0 color-mix(in srgb, var(--background) 24%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--background) 20%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.tech-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 -4px 0 color-mix(in srgb, var(--background) 24%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.tech-button-compact {
+  min-height: 1.75rem;
+  letter-spacing: 0.1em;
+}
+
+.tech-stepper {
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-success) 82%, var(--background));
+  box-shadow:
+    inset 0 -3px 0 color-mix(in srgb, var(--background) 24%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--background) 18%, transparent);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.tech-stepper:hover {
+  filter: brightness(1.08);
+}
+
+.tech-row {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--background) 76%, transparent), color-mix(in srgb, var(--surface) 48%, transparent)),
+    color-mix(in srgb, var(--background) 80%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.tech-row::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 55%, transparent), transparent);
+  opacity: 0.72;
+}
+
+.tech-badge {
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 3px;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  letter-spacing: 0.1em;
+}
+
+.tech-meter {
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  background: color-mix(in srgb, var(--surface) 62%, var(--background));
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--background) 45%, transparent);
+}
+
+@media (max-width: 640px) {
+  .tech-page::before {
+    inset: 8px;
+  }
+}

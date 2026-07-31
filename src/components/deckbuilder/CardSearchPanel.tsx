@@ -15,13 +15,13 @@ export default function CardSearchPanel({ deckId }: { deckId: Id<"decks"> }) {
   const addCard = useMutation(api.decks.addCard);
 
   return (
-    <div className="flex flex-col gap-3 rounded-[14px] border border-orchid-hush/15 bg-surface-deep/90 p-4 shadow-[0_8px_22px_rgba(0,0,0,0.18)]">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-orchid-hush">Card search</h2>
+    <div className="tech-panel flex flex-col gap-3 p-4">
+      <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">Card search</h2>
       <input
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         placeholder="Search by name…"
-        className="rounded-[10px] border border-white/10 bg-coffee-bean/90 px-3 py-2 text-sm text-orchid-hush outline-none transition focus:border-orchid-hush/40 focus:ring-2 focus:ring-orchid-hush/20"
+        className="tech-control px-3 py-2 text-sm text-orchid-hush outline-none transition"
       />
       <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto">
         {term.trim() && results === undefined && (
@@ -58,7 +58,7 @@ function CardSearchRow({
   const [section, setSection] = useState<Section>("deck");
 
   return (
-    <div className="flex items-center justify-between gap-2 rounded-[10px] border border-white/10 bg-coffee-bean/80 px-3 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.14)]">
+    <div className="tech-row flex flex-col justify-between gap-2 px-3 py-2 pl-4 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium text-orchid-hush">{name}</span>
         <span className="truncate text-xs text-ash-grey/80">
@@ -69,7 +69,7 @@ function CardSearchRow({
         <select
           value={section}
           onChange={(e) => setSection(e.target.value as Section)}
-          className="rounded-[8px] border border-white/10 bg-deep-teal/90 px-1 py-1 text-xs text-orchid-hush/80 outline-none"
+          className="tech-control px-2 py-1 font-mono text-xs text-orchid-hush/80 outline-none"
         >
           {SECTIONS.map((s) => (
             <option key={s} value={s}>
@@ -79,7 +79,7 @@ function CardSearchRow({
         </select>
         <button
           onClick={() => onAdd(section)}
-          className="rounded-[8px] bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean hover:bg-orchid-hush/90 hover:brightness-95"
+          className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean"
         >
           Add
         </button>
