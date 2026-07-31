@@ -67,7 +67,8 @@ export default defineSchema({
     // (e.g. "commander", "modern") — not a fixed enum, since Scryfall adds
     // formats over time (see cards.legalities comment).
     format: v.string(),
-  }),
+    ownerTokenIdentifier: v.optional(v.string()),
+  }).index("by_owner", ["ownerTokenIdentifier"]),
 
   // One row per unique (section, card) pair per deck — a "4 Lightning Bolt"
   // entry is one row with quantity 4, not four rows. Unlike cardInstances,

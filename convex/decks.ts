@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 
 const deckSection = v.union(
   v.literal("deck"),
@@ -8,25 +9,58 @@ const deckSection = v.union(
   v.literal("companion"),
 );
 
+type DeckCtx = QueryCtx | MutationCtx;
+
+const requireAuthenticatedUser = async (ctx: DeckCtx) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Not authenticated");
+  }
+  return identity;
+};
+
+const requireDeckAccess = async (ctx: DeckCtx, deckId: Id<"decks">) => {
+  const identity = await requireAuthenticatedUser(ctx);
+  const deck = await ctx.db.get(deckId);
+  if (!deck) {
+    throw new Error("Deck not found");
+  }
+  if (deck.ownerTokenIdentifier !== identity.tokenIdentifier) {
+    throw new Error("Unauthorized");
+  }
+  return { identity, deck };
+};
+
 export const createDeck = mutation({
   args: { name: v.string(), format: v.string() },
   returns: v.id("decks"),
   handler: async (ctx, { name, format }) => {
-    return await ctx.db.insert("decks", { name, format });
+    const identity = await requireAuthenticatedUser(ctx);
+    return await ctx.db.insert("decks", {
+      name,
+      format,
+      ownerTokenIdentifier: identity.tokenIdentifier,
+    });
   },
 });
 
 export const listDecks = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("decks").order("desc").take(100);
+    const identity = await requireAuthenticatedUser(ctx);
+    return await ctx.db
+      .query("decks")
+      .withIndex("by_owner", (q) => q.eq("ownerTokenIdentifier", identity.tokenIdentifier))
+      .order("desc")
+      .take(100);
   },
 });
 
 export const getDeck = query({
   args: { deckId: v.id("decks") },
   handler: async (ctx, { deckId }) => {
-    return await ctx.db.get(deckId);
+    const { deck } = await requireDeckAccess(ctx, deckId);
+    return deck;
   },
 });
 
@@ -34,6 +68,7 @@ export const renameDeck = mutation({
   args: { deckId: v.id("decks"), name: v.string() },
   returns: v.null(),
   handler: async (ctx, { deckId, name }) => {
+    await requireDeckAccess(ctx, deckId);
     await ctx.db.patch(deckId, { name });
     return null;
   },
@@ -43,6 +78,7 @@ export const setFormat = mutation({
   args: { deckId: v.id("decks"), format: v.string() },
   returns: v.null(),
   handler: async (ctx, { deckId, format }) => {
+    await requireDeckAccess(ctx, deckId);
     await ctx.db.patch(deckId, { format });
     return null;
   },
@@ -52,6 +88,7 @@ export const deleteDeck = mutation({
   args: { deckId: v.id("decks") },
   returns: v.null(),
   handler: async (ctx, { deckId }) => {
+    await requireDeckAccess(ctx, deckId);
     const entries = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck", (q) => q.eq("deckId", deckId))
@@ -69,6 +106,7 @@ export const deleteDeck = mutation({
 export const listEntriesWithCards = query({
   args: { deckId: v.id("decks") },
   handler: async (ctx, { deckId }) => {
+    await requireDeckAccess(ctx, deckId);
     const entries = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck", (q) => q.eq("deckId", deckId))
@@ -95,6 +133,7 @@ export const addCard = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { deckId, section, cardOracleId, quantity }) => {
+    await requireDeckAccess(ctx, deckId);
     const delta = quantity ?? 1;
     const existing = await ctx.db
       .query("deckEntries")
@@ -121,6 +160,7 @@ export const setQuantity = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { deckId, section, cardOracleId, quantity }) => {
+    await requireDeckAccess(ctx, deckId);
     const existing = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck_and_section_and_card", (q) =>
@@ -144,6 +184,7 @@ export const removeCard = mutation({
   args: { deckId: v.id("decks"), section: deckSection, cardOracleId: v.string() },
   returns: v.null(),
   handler: async (ctx, { deckId, section, cardOracleId }) => {
+    await requireDeckAccess(ctx, deckId);
     const existing = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck_and_section_and_card", (q) =>
@@ -166,6 +207,7 @@ export const moveEntry = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { deckId, cardOracleId, fromSection, toSection }) => {
+    await requireDeckAccess(ctx, deckId);
     if (fromSection === toSection) return null;
     const source = await ctx.db
       .query("deckEntries")
@@ -202,6 +244,7 @@ export const importResolvedLines = mutation({
   args: { deckId: v.id("decks"), lines: v.array(resolvedImportLine) },
   returns: v.null(),
   handler: async (ctx, { deckId, lines }) => {
+    await requireDeckAccess(ctx, deckId);
     for (const line of lines) {
       const existing = await ctx.db
         .query("deckEntries")
@@ -230,6 +273,7 @@ export const exportDeck = query({
   args: { deckId: v.id("decks") },
   returns: v.string(),
   handler: async (ctx, { deckId }) => {
+    await requireDeckAccess(ctx, deckId);
     const entries = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck", (q) => q.eq("deckId", deckId))
