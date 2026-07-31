@@ -54,7 +54,9 @@ export default function RootLayout({
         </Script>
         <ClerkProvider>
           <ThemeSelector />
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <main className="min-h-full pt-24">
+            <ConvexClientProvider>{children}</ConvexClientProvider>
+          </main>
         </ClerkProvider>
       </body>
     </html>

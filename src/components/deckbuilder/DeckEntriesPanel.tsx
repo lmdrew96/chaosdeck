@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Doc, Id } from "../../../convex/_generated/dataModel";
+import CardHoverPreview, { type CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
 import ManaCost from "./manaCost";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
@@ -59,10 +60,10 @@ function sortEntries(entries: HydratedEntry[], mode: SortMode) {
 function legalityBadge(card: Doc<"cards"> | null, format: string) {
   if (!card) return null;
   const status = card.legalities[format];
-  if (!status) return { label: "unknown", className: "bg-surface text-ash-grey/80" };
-  if (status === "legal") return { label: "legal", className: "bg-muted-teal text-orchid-hush" };
+  if (!status) return { label: "unknown", className: "bg-surface text-coffee-bean" };
+  if (status === "legal") return { label: "legal", className: "bg-muted-teal text-coffee-bean" };
   if (status === "restricted") return { label: "restricted", className: "bg-orchid-hush text-coffee-bean" };
-  return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-orchid-hush/80" };
+  return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-coffee-bean" };
 }
 
 export default function DeckEntriesPanel({
@@ -78,6 +79,8 @@ export default function DeckEntriesPanel({
   const moveEntry = useMutation(api.decks.moveEntry);
   const [sortMode, setSortMode] = useState<SortMode>("alphabetical");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [previewCard, setPreviewCard] = useState<CardHoverPreviewData | null>(null);
+  const [previewPosition, setPreviewPosition] = useState<{ top: number; left: number } | null>(null);
 
   if (entries === undefined) {
     return (
@@ -99,6 +102,35 @@ export default function DeckEntriesPanel({
   const toggleGroup = (section: Section, groupName: string) => {
     const key = `${section}:${groupName}`;
     setCollapsedGroups((current) => ({ ...current, [key]: !current[key] }));
+  };
+
+  const showPreview = (entry: HydratedEntry, element: HTMLElement) => {
+    if (!entry.card) return;
+    const rect = element.getBoundingClientRect();
+    const previewWidth = 288;
+    const gap = 16;
+    const margin = 16;
+    let left = rect.right + gap;
+    if (left + previewWidth > window.innerWidth - margin) {
+      left = rect.left - previewWidth - gap;
+    }
+    if (left < margin) {
+      left = margin;
+    }
+    const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
+    setPreviewCard({
+      name: entry.card.name,
+      imageUri: entry.printImageUri ?? entry.card.imageUri,
+      cardFaces: entry.card.cardFaces,
+      oracleText: entry.card.oracleText,
+      subtitle: entry.printSetCode ? `${entry.printSetCode} #${entry.printCollectorNumber}` : undefined,
+    });
+    setPreviewPosition({ top, left });
+  };
+
+  const clearPreview = () => {
+    setPreviewCard(null);
+    setPreviewPosition(null);
   };
 
   const groupedEntries = (section: Section): Array<[string, HydratedEntry[]]> => {
@@ -161,6 +193,8 @@ export default function DeckEntriesPanel({
                         <div
                           key={entry._id}
                           className="tech-row flex flex-col gap-2 px-3 py-2 pl-5 xl:flex-row xl:items-center"
+                          onMouseEnter={(event) => showPreview(entry, event.currentTarget)}
+                          onMouseLeave={clearPreview}
                         >
                           <div className="flex min-w-0 flex-1 items-start gap-3">
                             {(entry.printImageUri ?? entry.card?.imageUri) ? (
@@ -191,12 +225,12 @@ export default function DeckEntriesPanel({
                                   </span>
                                 ) : null}
                                 {isCommanderSection ? (
-                                  <span className="tech-badge bg-muted-teal px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush">
+                                  <span className="tech-badge bg-muted-teal px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-coffee-bean">
                                     singleton
                                   </span>
                                 ) : null}
                                 {isCommanderSingletonViolation && (
-                                  <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
+                                  <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-coffee-bean">
                                     singleton
                                   </span>
                                 )}
@@ -270,6 +304,7 @@ export default function DeckEntriesPanel({
       {entries.length === 0 && (
         <p className="text-sm text-ash-grey/80">No cards yet — search or import to add some.</p>
       )}
+      <CardHoverPreview card={previewCard} position={previewPosition} />
     </div>
   );
 }

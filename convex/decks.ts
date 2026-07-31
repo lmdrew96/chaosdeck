@@ -39,6 +39,46 @@ const assertCommanderSingleton = (section: DeckSection, quantity: number) => {
   }
 };
 
+const getCommanderColorIdentity = async (ctx: DeckCtx, deckId: Id<"decks">) => {
+  const entries = await ctx.db
+    .query("deckEntries")
+    .withIndex("by_deck", (q) => q.eq("deckId", deckId))
+    .take(500);
+
+  const colors = new Set<string>();
+  for (const entry of entries) {
+    if (entry.section !== "commander") continue;
+    const card = await ctx.db
+      .query("cards")
+      .withIndex("by_oracle_id", (q) => q.eq("oracleId", entry.cardOracleId))
+      .unique();
+    if (!card) continue;
+    for (const color of card.colorIdentity) {
+      colors.add(color);
+    }
+  }
+
+  return colors;
+};
+
+const assertCommanderColorIdentity = async (ctx: DeckCtx, deckId: Id<"decks">, cardOracleId: string, section: DeckSection) => {
+  const deck = await ctx.db.get(deckId);
+  if (!deck || deck.format !== "commander" || section === "commander") return;
+
+  const commanderColorIdentity = await getCommanderColorIdentity(ctx, deckId);
+  if (commanderColorIdentity.size === 0) return;
+
+  const card = await ctx.db
+    .query("cards")
+    .withIndex("by_oracle_id", (q) => q.eq("oracleId", cardOracleId))
+    .unique();
+  if (!card) return;
+
+  if (card.colorIdentity.some((color) => !commanderColorIdentity.has(color))) {
+    throw new Error("Card is outside this deck's commander color identity");
+  }
+};
+
 export const createDeck = mutation({
   args: { name: v.string(), format: v.string() },
   returns: v.id("decks"),
@@ -147,6 +187,9 @@ export const addCard = mutation({
   handler: async (ctx, { deckId, section, cardOracleId, quantity, printSetCode, printCollectorNumber, printImageUri, printScryfallUri }) => {
     await requireDeckAccess(ctx, deckId);
     const delta = quantity ?? 1;
+    if (delta > 0) {
+      await assertCommanderColorIdentity(ctx, deckId, cardOracleId, section);
+    }
     const printFields =
       printSetCode || printCollectorNumber || printImageUri || printScryfallUri
         ? { printSetCode, printCollectorNumber, printImageUri, printScryfallUri }
@@ -187,6 +230,9 @@ export const setQuantity = mutation({
   returns: v.null(),
   handler: async (ctx, { deckId, section, cardOracleId, quantity }) => {
     await requireDeckAccess(ctx, deckId);
+    if (quantity > 0) {
+      await assertCommanderColorIdentity(ctx, deckId, cardOracleId, section);
+    }
     const existing = await ctx.db
       .query("deckEntries")
       .withIndex("by_deck_and_section_and_card", (q) =>
@@ -274,6 +320,9 @@ export const importResolvedLines = mutation({
   handler: async (ctx, { deckId, lines }) => {
     await requireDeckAccess(ctx, deckId);
     for (const line of lines) {
+      if (line.quantity > 0) {
+        await assertCommanderColorIdentity(ctx, deckId, line.oracleId, line.section);
+      }
       const existing = await ctx.db
         .query("deckEntries")
         .withIndex("by_deck_and_section_and_card", (q) =>

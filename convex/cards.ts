@@ -150,21 +150,24 @@ function toPublicCard(raw: ScryfallCard) {
   };
 }
 
-async function fetchScryfallSearch(query: string, unique: "cards" | "prints") {
-  const res = await fetch(
-    `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=${unique}&order=released&dir=desc`,
-    {
-      headers: { "User-Agent": "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)", Accept: "application/json" },
-    },
-  );
+async function fetchScryfallSearch(queryOrUrl: string, unique: "cards" | "prints", cursor = false) {
+  const url = cursor
+    ? queryOrUrl
+    : `https://api.scryfall.com/cards/search?q=${encodeURIComponent(queryOrUrl)}&unique=${unique}&order=released&dir=desc`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)", Accept: "application/json" },
+  });
   if (res.status === 404) {
-    return [];
+    return { data: [], nextPage: null };
   }
   if (!res.ok) {
     throw new Error(`Scryfall search failed: ${res.status}`);
   }
-  const data = (await res.json()) as { data?: ScryfallCard[] };
-  return data.data ?? [];
+  const data = (await res.json()) as { data?: ScryfallCard[]; has_more?: boolean; next_page?: string };
+  return {
+    data: data.data ?? [],
+    nextPage: data.has_more ? data.next_page ?? null : null,
+  };
 }
 
 // Upserts by oracleId so a daily refresh never leaves the table momentarily
@@ -224,11 +227,17 @@ export const findExactByName = query({
 });
 
 export const searchCards = action({
-  args: { query: v.string() },
-  returns: v.array(publicCard),
-  handler: async (_, { query }) => {
-    const cards = await fetchScryfallSearch(query, "cards");
-    return cards.slice(0, 24).map(toPublicCard);
+  args: { query: v.string(), cursor: v.optional(v.string()) },
+  returns: v.object({
+    cards: v.array(publicCard),
+    nextPage: v.union(v.string(), v.null()),
+  }),
+  handler: async (_, { query, cursor }) => {
+    const page = cursor ? await fetchScryfallSearch(cursor, "cards", true) : await fetchScryfallSearch(query, "cards");
+    return {
+      cards: page.data.map(toPublicCard),
+      nextPage: page.nextPage,
+    };
   },
 });
 
@@ -242,12 +251,12 @@ export const getCardPrintings = action({
   }),
   handler: async (_, { oracleId }) => {
     const printings = await fetchScryfallSearch(`oracleid:${oracleId}`, "prints");
-    if (printings.length === 0) {
+    if (printings.data.length === 0) {
       throw new Error("Scryfall printings not found");
     }
 
     let rulings: Array<{ publishedAt: string; comment: string }> = [];
-    const first = printings[0];
+    const first = printings.data[0];
     if (first.rulings_uri) {
       const rulingsRes = await fetch(first.rulings_uri, {
         headers: { "User-Agent": "ChaosDeck/0.1 (MTG deckbuilder/playtester; github.com/lmdrew96)", Accept: "application/json" },
@@ -265,7 +274,7 @@ export const getCardPrintings = action({
     return {
       oracleId,
       name: first.name,
-      printings: printings.map(toPublicCard),
+      printings: printings.data.map(toPublicCard),
       rulings,
     };
   },

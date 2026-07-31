@@ -2,9 +2,10 @@
 "use client";
 
 import { useAction, useMutation, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import CardHoverPreview, { type CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
 import ManaCost from "@/components/deckbuilder/manaCost";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
@@ -54,6 +55,11 @@ type CardPrintings = {
   rulings: Array<{ publishedAt: string; comment: string }>;
 };
 
+type SearchPage = {
+  cards: PublicCard[];
+  nextPage: string | null;
+};
+
 type CardBrowserProps = {
   deckId?: Id<"decks">;
   title?: string;
@@ -61,22 +67,23 @@ type CardBrowserProps = {
   className?: string;
 };
 
-export default function CardBrowser({
-  deckId,
-  title = "Card search",
-  description,
-  className,
-}: CardBrowserProps) {
+export default function CardBrowser({ deckId, title = "Card search", description, className }: CardBrowserProps) {
   const searchCards = useAction(api.cards.searchCards);
   const getCardPrintings = useAction(api.cards.getCardPrintings);
   const addCard = useMutation(api.decks.addCard);
+  const deck = useQuery(api.decks.getDeck, deckId ? { deckId } : "skip");
   const deckEntries = useQuery(api.decks.listEntriesWithCards, deckId ? { deckId } : "skip");
 
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<PublicCard[]>([]);
+  const [nextPage, setNextPage] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
+  const [loadingMoreCursor, setLoadingMoreCursor] = useState<string | null>(null);
+  const [loadingMoreQuery, setLoadingMoreQuery] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hoveredOracleId, setHoveredOracleId] = useState<string | null>(null);
+  const [previewCard, setPreviewCard] = useState<CardHoverPreviewData | null>(null);
+  const [previewPosition, setPreviewPosition] = useState<{ top: number; left: number } | null>(null);
   const [selectedCard, setSelectedCard] = useState<PublicCard | null>(null);
   const [cardPrintings, setCardPrintings] = useState<CardPrintings | null>(null);
   const [printingsLoading, setPrintingsLoading] = useState(false);
@@ -87,8 +94,33 @@ export default function CardBrowser({
   const requestId = useRef(0);
   const addFeedbackTimeout = useRef<number | null>(null);
 
+  const deckCopiesByOracleId = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entry of deckEntries ?? []) {
+      counts.set(entry.cardOracleId, (counts.get(entry.cardOracleId) ?? 0) + entry.quantity);
+    }
+    return counts;
+  }, [deckEntries]);
+
+  const commanderColorIdentity = useMemo(() => {
+    const colors = new Set<string>();
+    for (const entry of deckEntries ?? []) {
+      if (entry.section !== "commander" || !entry.card) continue;
+      for (const color of entry.card.colorIdentity) {
+        colors.add(color);
+      }
+    }
+    return colors;
+  }, [deckEntries]);
+
+  const commanderColorIdentityList = useMemo(() => Array.from(commanderColorIdentity), [commanderColorIdentity]);
+  const isCommanderFormat = deck?.format === "commander";
+
   const commanderCopiesFor = (oracleId: string) =>
     deckEntries?.reduce((count, entry) => count + (entry.section === "commander" && entry.cardOracleId === oracleId ? entry.quantity : 0), 0) ?? 0;
+
+  const inDeckCopiesFor = (oracleId: string) => deckCopiesByOracleId.get(oracleId) ?? 0;
+  const isLoadingMore = loadingMoreQuery === term.trim() && loadingMoreCursor !== null;
 
   const showAddFeedback = (key: string) => {
     if (addFeedbackTimeout.current !== null) {
@@ -99,6 +131,32 @@ export default function CardBrowser({
       setAddFeedbackKey((current) => (current === key ? null : current));
       addFeedbackTimeout.current = null;
     }, 900);
+  };
+
+  const getPreviewPosition = (element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    const previewWidth = 288;
+    const gap = 16;
+    const margin = 16;
+    let left = rect.right + gap;
+    if (left + previewWidth > window.innerWidth - margin) {
+      left = rect.left - previewWidth - gap;
+    }
+    if (left < margin) {
+      left = margin;
+    }
+    const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
+    return { top, left };
+  };
+
+  const handlePreviewEnter = (card: CardHoverPreviewData, element: HTMLElement) => {
+    setPreviewCard(card);
+    setPreviewPosition(getPreviewPosition(element));
+  };
+
+  const clearPreview = () => {
+    setPreviewCard(null);
+    setPreviewPosition(null);
   };
 
   useEffect(() => {
@@ -117,19 +175,20 @@ export default function CardBrowser({
     }
 
     const currentRequest = ++requestId.current;
-
     const timeout = window.setTimeout(async () => {
       try {
         setSearching(true);
         setSearchError(null);
-        const cards = await searchCards({ query });
+        const page = (await searchCards({ query })) as SearchPage;
         if (requestId.current === currentRequest) {
-          setResults(cards);
-          setHoveredOracleId(cards[0]?.oracleId ?? null);
+          setResults(page.cards);
+          setNextPage(page.nextPage);
+          setHoveredOracleId(page.cards[0]?.oracleId ?? null);
         }
       } catch (error) {
         if (requestId.current === currentRequest) {
           setResults([]);
+          setNextPage(null);
           setSearchError(error instanceof Error ? error.message : "Search failed");
         }
       } finally {
@@ -164,16 +223,43 @@ export default function CardBrowser({
     };
   }, [getCardPrintings, selectedCard]);
 
+  const loadMore = async () => {
+    const query = term.trim();
+    if (!query || !nextPage || isLoadingMore) return;
+
+    const currentRequest = requestId.current;
+    setLoadingMoreQuery(query);
+    setLoadingMoreCursor(nextPage);
+    try {
+      const page = (await searchCards({ query, cursor: nextPage })) as SearchPage;
+      if (requestId.current === currentRequest) {
+        setResults((current) => [...current, ...page.cards]);
+        setNextPage(page.nextPage);
+      }
+    } finally {
+      if (requestId.current === currentRequest) {
+        setLoadingMoreCursor(null);
+      }
+    }
+  };
+
   const hasQuery = term.trim().length > 0;
   const visibleResults = hasQuery ? results : [];
   const visibleSearchError = hasQuery ? searchError : null;
   const visibleSearching = hasQuery && searching;
   const hoveredCard = visibleResults.find((card) => card.oracleId === hoveredOracleId) ?? visibleResults[0] ?? null;
-  const activeCard = selectedCard ?? hoveredCard;
   const selectedPrinting =
     selectedCard && cardPrintings?.oracleId === selectedCard.oracleId
       ? cardPrintings.printings[selectedPrintingIndex] ?? selectedCard
       : selectedCard ?? hoveredCard;
+
+  const createPreviewData = (card: PublicCard, subtitle?: string): CardHoverPreviewData => ({
+    name: card.name,
+    imageUri: card.imageUri,
+    cardFaces: card.cardFaces,
+    oracleText: card.oracleText,
+    subtitle,
+  });
 
   const handleAddCard = async (card: PublicCard, section: Section) => {
     if (!deckId) return;
@@ -207,56 +293,60 @@ export default function CardBrowser({
         {description ? <p className="text-xs text-ash-grey/80">{description}</p> : null}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
-        <div className="flex flex-col gap-3">
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search cards or Scryfall syntax…"
-            className="tech-control px-3 py-2 text-sm text-orchid-hush outline-none transition"
-          />
-          {addError ? <p className="text-xs text-[#cc2e6d]">{addError}</p> : null}
+      <div className="flex flex-col gap-3">
+        <input
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="Search cards or Scryfall syntax…"
+          className="tech-control px-3 py-2 text-sm text-orchid-hush outline-none transition"
+        />
+        {addError ? <p className="text-xs text-[#cc2e6d]">{addError}</p> : null}
 
-          <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
-            {!hasQuery && <p className="text-xs text-ash-grey/80">Search by name or use Scryfall syntax like <span className="font-mono">o=draw c=u</span>.</p>}
-            {visibleSearching && <p className="text-xs text-ash-grey/80">Searching…</p>}
-            {visibleSearchError && <p className="text-xs text-[#cc2e6d]">{visibleSearchError}</p>}
-            {hasQuery && !visibleSearching && !visibleSearchError && visibleResults.length === 0 && (
-              <p className="text-xs text-ash-grey/80">No cards found.</p>
-            )}
-            {visibleResults.map((card) => (
-              <CardResultRow
-                key={card.oracleId}
-                card={card}
-                allowAdd={Boolean(deckId)}
-                onHover={() => setHoveredOracleId(card.oracleId)}
-                onLeave={() => setHoveredOracleId((current) => (current === card.oracleId ? null : current))}
-                onOpen={() => {
-                  setPrintingsLoading(true);
-                  setSelectedPrintingIndex(0);
-                  setModalSection("deck");
-                  setCardPrintings(null);
-                  setSelectedCard(card);
-                }}
-                onAdd={(section) => void handleAddCard(card, section)}
-                commanderCopies={commanderCopiesFor(card.oracleId)}
-                addFeedbackKey={addFeedbackKey}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="tech-panel flex min-h-[22rem] flex-col gap-3 p-4">
-          <h3 className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">Preview</h3>
-          {activeCard ? (
-            <CardPreview card={activeCard} />
-          ) : (
-            <p className="text-sm text-ash-grey/80">Hover a result to preview its art, then click the name for printings and rulings.</p>
-          )}
+        <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
+          {!hasQuery && <p className="text-xs text-ash-grey/80">Search by name or use Scryfall syntax like <span className="font-mono">o=draw c=u</span>.</p>}
+          {visibleSearching && <p className="text-xs text-ash-grey/80">Searching…</p>}
+          {visibleSearchError && <p className="text-xs text-[#cc2e6d]">{visibleSearchError}</p>}
+          {hasQuery && !visibleSearching && !visibleSearchError && visibleResults.length === 0 && <p className="text-xs text-ash-grey/80">No cards found.</p>}
+          {visibleResults.map((card) => (
+            <CardResultRow
+              key={card.oracleId}
+              card={card}
+              allowAdd={Boolean(deckId)}
+              inDeckCopies={inDeckCopiesFor(card.oracleId)}
+              onHover={() => setHoveredOracleId(card.oracleId)}
+              onLeave={() => setHoveredOracleId((current) => (current === card.oracleId ? null : current))}
+              onPreview={(element) => handlePreviewEnter(createPreviewData(card, `${card.setName} · ${card.rarity}`), element)}
+              onPreviewLeave={clearPreview}
+              onOpen={() => {
+                setPrintingsLoading(true);
+                setSelectedPrintingIndex(0);
+                setModalSection("deck");
+                setCardPrintings(null);
+                setSelectedCard(card);
+              }}
+              onAdd={(section) => void handleAddCard(card, section)}
+              commanderCopies={commanderCopiesFor(card.oracleId)}
+              commanderColorIdentity={commanderColorIdentityList}
+              isCommanderFormat={isCommanderFormat}
+              addFeedbackKey={addFeedbackKey}
+            />
+          ))}
+          {nextPage ? (
+            <button
+              type="button"
+              onClick={() => void loadMore()}
+              disabled={isLoadingMore}
+              className="tech-button w-fit bg-background/70 px-4 py-2 text-xs font-semibold text-coffee-bean transition disabled:opacity-50"
+            >
+              {isLoadingMore ? "Loading more…" : "Load more"}
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {selectedCard && (
+      <CardHoverPreview card={previewCard} position={previewPosition} />
+
+      {selectedCard ? (
         <CardModal
           card={selectedCard}
           printings={cardPrintings}
@@ -269,9 +359,11 @@ export default function CardBrowser({
           onAdd={deckId && selectedPrinting ? () => void handleAddSelected() : undefined}
           allowAdd={Boolean(deckId)}
           commanderCopies={selectedPrinting ? commanderCopiesFor(selectedPrinting.oracleId) : 0}
+          commanderColorIdentity={commanderColorIdentityList}
+          isCommanderFormat={isCommanderFormat}
           addFeedbackKey={addFeedbackKey}
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -279,35 +371,52 @@ export default function CardBrowser({
 function CardResultRow({
   card,
   allowAdd,
+  inDeckCopies,
   onHover,
   onLeave,
+  onPreview,
+  onPreviewLeave,
   onOpen,
   onAdd,
   commanderCopies,
+  commanderColorIdentity,
+  isCommanderFormat,
   addFeedbackKey,
 }: {
   card: PublicCard;
   allowAdd: boolean;
+  inDeckCopies: number;
   onHover: () => void;
   onLeave: () => void;
+  onPreview: (element: HTMLElement) => void;
+  onPreviewLeave: () => void;
   onOpen: () => void;
   onAdd: (section: Section) => void;
   commanderCopies: number;
+  commanderColorIdentity: string[];
+  isCommanderFormat: boolean;
   addFeedbackKey: string | null;
 }) {
   const [section, setSection] = useState<Section>("deck");
   const isAdded = addFeedbackKey === `${card.oracleId}:${section}`;
   const commanderBlocked = section === "commander" && commanderCopies > 0;
-  const commanderRecentlyAdded = section === "commander" && isAdded;
+  const colorBlocked =
+    isCommanderFormat && section !== "commander" && commanderColorIdentity.length > 0 && card.colorIdentity.some((color) => !commanderColorIdentity.includes(color));
 
   return (
-    <div className="tech-row flex flex-col gap-2 px-3 py-2 pl-4 sm:flex-row sm:items-center sm:justify-between" onMouseEnter={onHover} onMouseLeave={onLeave}>
+    <div
+      className="tech-row flex flex-col gap-2 px-3 py-2 pl-4 sm:flex-row sm:items-center sm:justify-between"
+      onMouseEnter={(event) => {
+        onHover();
+        onPreview(event.currentTarget);
+      }}
+      onMouseLeave={() => {
+        onLeave();
+        onPreviewLeave();
+      }}
+    >
       <div className="flex min-w-0 flex-1 flex-col">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="truncate text-left text-sm font-medium text-orchid-hush transition hover:brightness-110"
-        >
+        <button type="button" onClick={onOpen} className="truncate text-left text-sm font-medium text-orchid-hush transition hover:brightness-110">
           {card.name}
         </button>
         <div className="flex flex-wrap items-center gap-1 text-xs text-ash-grey/80">
@@ -321,6 +430,7 @@ function CardResultRow({
           <span>·</span>
           <span className="font-mono uppercase tracking-[0.16em]">{card.setCode}</span>
           <span>#{card.collectorNumber}</span>
+          {inDeckCopies > 0 ? <span className="tech-badge bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-coffee-bean">in deck {inDeckCopies}</span> : null}
         </div>
       </div>
 
@@ -341,38 +451,17 @@ function CardResultRow({
             <button
               type="button"
               onClick={() => onAdd(section)}
-              disabled={commanderBlocked || commanderRecentlyAdded}
-              title={commanderBlocked ? "Commander section allows only one copy" : undefined}
+              disabled={commanderBlocked || isAdded || colorBlocked}
+              title={commanderBlocked ? "Commander section allows only one copy" : colorBlocked ? "Card is outside this deck's commander color identity" : undefined}
               className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {commanderRecentlyAdded ? "✓ Added" : commanderBlocked ? "1 max" : "Add"}
+              {isAdded ? "✓ Added" : commanderBlocked ? "1 max" : colorBlocked ? "Off-color" : "Add"}
             </button>
           </div>
           {commanderBlocked ? <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80">Commander is singleton.</p> : null}
+          {colorBlocked ? <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80">Color identity mismatch.</p> : null}
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function CardPreview({ card }: { card: PublicCard }) {
-  return (
-    <div className="flex flex-col gap-3">
-      {card.cardFaces?.length ? (
-        <div className={`grid gap-3 ${card.cardFaces.length > 1 ? "sm:grid-cols-2" : ""}`}>
-          {card.cardFaces.map((face) => (
-            <CardImage key={face.name} src={face.imageUri} alt={face.name} />
-          ))}
-        </div>
-      ) : (
-        <CardImage src={card.imageUri} alt={card.name} />
-      )}
-      <div className="space-y-2 text-xs text-ash-grey/80">
-        <p className="font-mono uppercase tracking-[0.18em] text-orchid-hush/80">
-          {card.setName} · {card.rarity}
-        </p>
-        <p className="whitespace-pre-wrap text-sm text-orchid-hush/90">{card.oracleText ?? "No oracle text available."}</p>
-      </div>
     </div>
   );
 }
@@ -389,6 +478,8 @@ function CardModal({
   onAdd,
   allowAdd,
   commanderCopies,
+  commanderColorIdentity,
+  isCommanderFormat,
   addFeedbackKey,
 }: {
   card: PublicCard;
@@ -402,12 +493,15 @@ function CardModal({
   onAdd?: () => void;
   allowAdd: boolean;
   commanderCopies: number;
+  commanderColorIdentity: string[];
+  isCommanderFormat: boolean;
   addFeedbackKey: string | null;
 }) {
   const selectedPrinting = printings?.printings[selectedPrintingIndex] ?? card;
   const isAdded = addFeedbackKey === `${selectedPrinting.oracleId}:${section}`;
   const commanderBlocked = section === "commander" && commanderCopies > 0;
-  const commanderRecentlyAdded = section === "commander" && isAdded;
+  const colorBlocked =
+    isCommanderFormat && section !== "commander" && commanderColorIdentity.length > 0 && selectedPrinting.colorIdentity.some((color) => !commanderColorIdentity.includes(color));
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#120d0a]/80 px-4 py-8" onClick={onClose}>
@@ -431,11 +525,7 @@ function CardModal({
             ) : printings ? (
               <>
                 <div className={`grid gap-3 ${selectedPrinting.cardFaces?.length && selectedPrinting.cardFaces.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                  {selectedPrinting.cardFaces?.length ? (
-                    selectedPrinting.cardFaces.map((face) => <CardImage key={face.name} src={face.imageUri} alt={face.name} />)
-                  ) : (
-                    <CardImage src={selectedPrinting.imageUri} alt={selectedPrinting.name} />
-                  )}
+                  {selectedPrinting.cardFaces?.length ? selectedPrinting.cardFaces.map((face) => <CardImage key={face.name} src={face.imageUri} alt={face.name} />) : <CardImage src={selectedPrinting.imageUri} alt={selectedPrinting.name} />}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -467,17 +557,16 @@ function CardModal({
                         </option>
                       ))}
                     </select>
-                    {commanderBlocked ? (
-                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80">Commander is singleton.</p>
-                    ) : null}
+                    {commanderBlocked ? <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80">Commander is singleton.</p> : null}
+                    {colorBlocked ? <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80">Color identity mismatch.</p> : null}
                     <button
                       type="button"
                       onClick={onAdd}
-                      disabled={commanderBlocked || commanderRecentlyAdded}
-                      title={commanderBlocked ? "Commander section allows only one copy" : undefined}
+                      disabled={commanderBlocked || isAdded || colorBlocked}
+                      title={commanderBlocked ? "Commander section allows only one copy" : colorBlocked ? "Card is outside this deck's commander color identity" : undefined}
                       className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {commanderRecentlyAdded ? "✓ Added" : commanderBlocked ? "1 max" : "Add selected print"}
+                      {isAdded ? "✓ Added" : commanderBlocked ? "1 max" : colorBlocked ? "Off-color" : "Add selected print"}
                     </button>
                   </div>
                 ) : null}

@@ -90,7 +90,7 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
             <button
               onClick={() => void handleConfirm()}
               disabled={busy}
-              className="tech-button bg-deep-teal/80 px-3 py-1.5 text-xs font-semibold text-orchid-hush disabled:opacity-50"
+              className="tech-button bg-deep-teal/80 px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
             >
               Add {resolved.length} resolved to deck
             </button>
