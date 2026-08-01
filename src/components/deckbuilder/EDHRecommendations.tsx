@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import CardDetailModal from "@/components/cards/CardDetailModal";
+import CardHoverPreview, { type CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
+import { useCardPreview } from "@/components/cards/useCardPreview";
 
 type RecommendedCard = {
   name: string;
@@ -70,6 +73,8 @@ export default function EDHRecommendations({ deckId }: { deckId: Id<"decks"> }) 
     };
   }, [deck?.format, commanderKey, getCommanderRecommendations]);
 
+  const { previewCard, previewPosition, showPreview, clearPreview } = useCardPreview();
+
   if (deck?.format !== "commander" || commanders.length === 0) return null;
 
   const inDeckOracleIds = new Set((entries ?? []).filter((e) => e.section !== "sideboard").map((e) => e.cardOracleId));
@@ -99,21 +104,15 @@ export default function EDHRecommendations({ deckId }: { deckId: Id<"decks"> }) 
                 const alreadyIn = Boolean(card.oracleId && (inDeckOracleIds.has(card.oracleId) || addedOracleIds.has(card.oracleId)));
                 const inclusionPct = card.potentialDecks > 0 ? Math.round((card.numDecks / card.potentialDecks) * 100) : 0;
                 return (
-                  <div key={card.name} className="tech-row flex items-center justify-between gap-2 px-3 py-1.5">
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-xs font-medium text-orchid-hush">{card.name}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ash-grey/60">{inclusionPct}% of decks</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleAdd(card)}
-                      disabled={!card.oracleId || alreadyIn}
-                      title={!card.oracleId ? "Not in local card cache" : undefined}
-                      className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {alreadyIn ? "✓ In deck" : "Add"}
-                    </button>
-                  </div>
+                  <RecommendationRow
+                    key={card.name}
+                    card={card}
+                    alreadyIn={alreadyIn}
+                    inclusionPct={inclusionPct}
+                    onAdd={() => void handleAdd(card)}
+                    onHover={showPreview}
+                    onHoverEnd={clearPreview}
+                  />
                 );
               })}
             </div>
@@ -124,6 +123,90 @@ export default function EDHRecommendations({ deckId }: { deckId: Id<"decks"> }) 
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ash-grey/60">
         Sourced from EDHREC&apos;s unofficial data feed — may occasionally be unavailable.
       </p>
+
+      <CardHoverPreview card={previewCard} position={previewPosition} />
+    </div>
+  );
+}
+
+// Recommendations only carry EDHREC's name/synergy data, not card art or
+// oracle text — each row looks up its own card from the local cache (once
+// the player interacts with it) to feed the shared hover preview and the
+// tap-to-open detail modal (hover is unavailable on touch devices, so tap
+// is the only way in to see the card there).
+function RecommendationRow({
+  card,
+  alreadyIn,
+  inclusionPct,
+  onAdd,
+  onHover,
+  onHoverEnd,
+}: {
+  card: RecommendedCard;
+  alreadyIn: boolean;
+  inclusionPct: number;
+  onAdd: () => void;
+  onHover: (data: CardHoverPreviewData, element: HTMLElement) => void;
+  onHoverEnd: () => void;
+}) {
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const fullCard = useQuery(api.cards.getByOracleId, hasInteracted && card.oracleId ? { oracleId: card.oracleId } : "skip");
+
+  const previewData: CardHoverPreviewData | null = fullCard
+    ? { name: fullCard.name, imageUri: fullCard.imageUri, cardFaces: fullCard.cardFaces, oracleText: fullCard.oracleText }
+    : null;
+
+  useEffect(() => {
+    if (isHovering && previewData && rowRef.current) {
+      onHover(previewData, rowRef.current);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHovering, previewData]);
+
+  return (
+    <div
+      ref={rowRef}
+      className="tech-row flex items-center justify-between gap-2 px-3 py-1.5"
+      onMouseEnter={() => {
+        setHasInteracted(true);
+        setIsHovering(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovering(false);
+        onHoverEnd();
+      }}
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        {card.oracleId ? (
+          <button
+            type="button"
+            onClick={() => {
+              setHasInteracted(true);
+              setModalOpen(true);
+            }}
+            className="truncate text-left text-xs font-medium text-orchid-hush transition hover:brightness-110"
+          >
+            {card.name}
+          </button>
+        ) : (
+          <span className="truncate text-xs font-medium text-orchid-hush">{card.name}</span>
+        )}
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ash-grey/60">{inclusionPct}% of decks</span>
+      </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={!card.oracleId || alreadyIn}
+        title={!card.oracleId ? "Not in local card cache" : undefined}
+        className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {alreadyIn ? "✓ In deck" : "Add"}
+      </button>
+
+      {modalOpen && previewData ? <CardDetailModal card={previewData} onClose={() => setModalOpen(false)} /> : null}
     </div>
   );
 }
