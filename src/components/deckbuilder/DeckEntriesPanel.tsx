@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Doc, Id } from "../../../convex/_generated/dataModel";
-import CardHoverPreview, { type CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
+import CardHoverPreview from "@/components/cards/CardHoverPreview";
+import { useCardPreview } from "@/components/cards/useCardPreview";
 import ManaCost from "./manaCost";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
@@ -60,10 +61,10 @@ function sortEntries(entries: HydratedEntry[], mode: SortMode) {
 function legalityBadge(card: Doc<"cards"> | null, format: string) {
   if (!card) return null;
   const status = card.legalities[format];
-  if (!status) return { label: "unknown", className: "bg-surface text-coffee-bean" };
+  if (!status) return { label: "unknown", className: "bg-[#5c5c5c] text-white" };
   if (status === "legal") return { label: "legal", className: "bg-muted-teal text-coffee-bean" };
   if (status === "restricted") return { label: "restricted", className: "bg-orchid-hush text-coffee-bean" };
-  return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-coffee-bean" };
+  return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-white" };
 }
 
 export default function DeckEntriesPanel({
@@ -79,8 +80,7 @@ export default function DeckEntriesPanel({
   const moveEntry = useMutation(api.decks.moveEntry);
   const [sortMode, setSortMode] = useState<SortMode>("alphabetical");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const [previewCard, setPreviewCard] = useState<CardHoverPreviewData | null>(null);
-  const [previewPosition, setPreviewPosition] = useState<{ top: number; left: number } | null>(null);
+  const { previewCard, previewPosition, showPreview, clearPreview } = useCardPreview();
 
   if (entries === undefined) {
     return (
@@ -104,33 +104,18 @@ export default function DeckEntriesPanel({
     setCollapsedGroups((current) => ({ ...current, [key]: !current[key] }));
   };
 
-  const showPreview = (entry: HydratedEntry, element: HTMLElement) => {
+  const showEntryPreview = (entry: HydratedEntry, element: HTMLElement) => {
     if (!entry.card) return;
-    const rect = element.getBoundingClientRect();
-    const previewWidth = 288;
-    const gap = 16;
-    const margin = 16;
-    let left = rect.right + gap;
-    if (left + previewWidth > window.innerWidth - margin) {
-      left = rect.left - previewWidth - gap;
-    }
-    if (left < margin) {
-      left = margin;
-    }
-    const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
-    setPreviewCard({
-      name: entry.card.name,
-      imageUri: entry.printImageUri ?? entry.card.imageUri,
-      cardFaces: entry.card.cardFaces,
-      oracleText: entry.card.oracleText,
-      subtitle: entry.printSetCode ? `${entry.printSetCode} #${entry.printCollectorNumber}` : undefined,
-    });
-    setPreviewPosition({ top, left });
-  };
-
-  const clearPreview = () => {
-    setPreviewCard(null);
-    setPreviewPosition(null);
+    showPreview(
+      {
+        name: entry.card.name,
+        imageUri: entry.printImageUri ?? entry.card.imageUri,
+        cardFaces: entry.card.cardFaces,
+        oracleText: entry.card.oracleText,
+        subtitle: entry.printSetCode ? `${entry.printSetCode} #${entry.printCollectorNumber}` : undefined,
+      },
+      element,
+    );
   };
 
   const groupedEntries = (section: Section): Array<[string, HydratedEntry[]]> => {
@@ -193,7 +178,7 @@ export default function DeckEntriesPanel({
                         <div
                           key={entry._id}
                           className="tech-row flex flex-col gap-2 px-3 py-2 pl-5 xl:flex-row xl:items-center"
-                          onMouseEnter={(event) => showPreview(entry, event.currentTarget)}
+                          onMouseEnter={(event) => showEntryPreview(entry, event.currentTarget)}
                           onMouseLeave={clearPreview}
                         >
                           <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -230,10 +215,21 @@ export default function DeckEntriesPanel({
                                   </span>
                                 ) : null}
                                 {isCommanderSingletonViolation && (
-                                  <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-coffee-bean">
+                                  <span className="tech-badge bg-[#cc2e6d] px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-white">
                                     singleton
                                   </span>
                                 )}
+                                {entry.printScryfallUri ? (
+                                  <a
+                                    href={entry.printScryfallUri}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-orchid-hush/70 transition hover:text-orchid-hush"
+                                  >
+                                    Scryfall ↗
+                                  </a>
+                                ) : null}
                               </div>
                             </div>
                           </div>

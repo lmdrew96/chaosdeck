@@ -1,12 +1,21 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import CardHoverPreview, { type CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
+import CardImage from "@/components/cards/CardImage";
+import { useCardPreview } from "@/components/cards/useCardPreview";
 import ManaCost from "@/components/deckbuilder/manaCost";
+
+function formatPrice(priceUsd?: string) {
+  return priceUsd ? `$${priceUsd}` : null;
+}
+
+const MODAL_IMAGE_CLASS = "w-full rounded-[4px] border border-orchid-hush/20 shadow-[0_18px_40px_rgba(0,0,0,0.24)]";
+const MODAL_IMAGE_FALLBACK_CLASS = "tech-row flex min-h-64 items-center justify-center px-4 py-6 text-sm text-ash-grey/80";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
 
@@ -82,8 +91,7 @@ export default function CardBrowser({ deckId, title = "Card search", description
   const [loadingMoreQuery, setLoadingMoreQuery] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hoveredOracleId, setHoveredOracleId] = useState<string | null>(null);
-  const [previewCard, setPreviewCard] = useState<CardHoverPreviewData | null>(null);
-  const [previewPosition, setPreviewPosition] = useState<{ top: number; left: number } | null>(null);
+  const { previewCard, previewPosition, showPreview, clearPreview } = useCardPreview();
   const [selectedCard, setSelectedCard] = useState<PublicCard | null>(null);
   const [cardPrintings, setCardPrintings] = useState<CardPrintings | null>(null);
   const [printingsLoading, setPrintingsLoading] = useState(false);
@@ -131,32 +139,6 @@ export default function CardBrowser({ deckId, title = "Card search", description
       setAddFeedbackKey((current) => (current === key ? null : current));
       addFeedbackTimeout.current = null;
     }, 900);
-  };
-
-  const getPreviewPosition = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const previewWidth = 288;
-    const gap = 16;
-    const margin = 16;
-    let left = rect.right + gap;
-    if (left + previewWidth > window.innerWidth - margin) {
-      left = rect.left - previewWidth - gap;
-    }
-    if (left < margin) {
-      left = margin;
-    }
-    const top = Math.max(margin, Math.min(rect.top, window.innerHeight - margin));
-    return { top, left };
-  };
-
-  const handlePreviewEnter = (card: CardHoverPreviewData, element: HTMLElement) => {
-    setPreviewCard(card);
-    setPreviewPosition(getPreviewPosition(element));
-  };
-
-  const clearPreview = () => {
-    setPreviewCard(null);
-    setPreviewPosition(null);
   };
 
   useEffect(() => {
@@ -222,6 +204,15 @@ export default function CardBrowser({ deckId, title = "Card search", description
       cancelled = true;
     };
   }, [getCardPrintings, selectedCard]);
+
+  useEffect(() => {
+    if (!selectedCard) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedCard]);
 
   const loadMore = async () => {
     const query = term.trim();
@@ -315,7 +306,7 @@ export default function CardBrowser({ deckId, title = "Card search", description
               inDeckCopies={inDeckCopiesFor(card.oracleId)}
               onHover={() => setHoveredOracleId(card.oracleId)}
               onLeave={() => setHoveredOracleId((current) => (current === card.oracleId ? null : current))}
-              onPreview={(element) => handlePreviewEnter(createPreviewData(card, `${card.setName} · ${card.rarity}`), element)}
+              onPreview={(element) => showPreview(createPreviewData(card, `${card.setName} · ${card.rarity}`), element)}
               onPreviewLeave={clearPreview}
               onOpen={() => {
                 setPrintingsLoading(true);
@@ -336,7 +327,7 @@ export default function CardBrowser({ deckId, title = "Card search", description
               type="button"
               onClick={() => void loadMore()}
               disabled={isLoadingMore}
-              className="tech-button w-fit bg-background/70 px-4 py-2 text-xs font-semibold text-coffee-bean transition disabled:opacity-50"
+              className="tech-button w-fit bg-background/70 px-4 py-2 text-xs font-semibold text-ash-grey transition disabled:opacity-50"
             >
               {isLoadingMore ? "Loading more…" : "Load more"}
             </button>
@@ -346,24 +337,27 @@ export default function CardBrowser({ deckId, title = "Card search", description
 
       <CardHoverPreview card={previewCard} position={previewPosition} />
 
-      {selectedCard ? (
-        <CardModal
-          card={selectedCard}
-          printings={cardPrintings}
-          loading={printingsLoading}
-          selectedPrintingIndex={selectedPrintingIndex}
-          onClose={() => setSelectedCard(null)}
-          onSelectPrinting={setSelectedPrintingIndex}
-          section={modalSection}
-          onSectionChange={setModalSection}
-          onAdd={deckId && selectedPrinting ? () => void handleAddSelected() : undefined}
-          allowAdd={Boolean(deckId)}
-          commanderCopies={selectedPrinting ? commanderCopiesFor(selectedPrinting.oracleId) : 0}
-          commanderColorIdentity={commanderColorIdentityList}
-          isCommanderFormat={isCommanderFormat}
-          addFeedbackKey={addFeedbackKey}
-        />
-      ) : null}
+      {selectedCard
+        ? createPortal(
+            <CardModal
+              card={selectedCard}
+              printings={cardPrintings}
+              loading={printingsLoading}
+              selectedPrintingIndex={selectedPrintingIndex}
+              onClose={() => setSelectedCard(null)}
+              onSelectPrinting={setSelectedPrintingIndex}
+              section={modalSection}
+              onSectionChange={setModalSection}
+              onAdd={deckId && selectedPrinting ? () => void handleAddSelected() : undefined}
+              allowAdd={Boolean(deckId)}
+              commanderCopies={selectedPrinting ? commanderCopiesFor(selectedPrinting.oracleId) : 0}
+              commanderColorIdentity={commanderColorIdentityList}
+              isCommanderFormat={isCommanderFormat}
+              addFeedbackKey={addFeedbackKey}
+            />,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -430,7 +424,13 @@ function CardResultRow({
           <span>·</span>
           <span className="font-mono uppercase tracking-[0.16em]">{card.setCode}</span>
           <span>#{card.collectorNumber}</span>
-          {inDeckCopies > 0 ? <span className="tech-badge bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-coffee-bean">in deck {inDeckCopies}</span> : null}
+          {formatPrice(card.priceUsd) ? (
+            <>
+              <span>·</span>
+              <span className="font-mono">{formatPrice(card.priceUsd)}</span>
+            </>
+          ) : null}
+          {inDeckCopies > 0 ? <span className="tech-badge bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ash-grey">in deck {inDeckCopies}</span> : null}
         </div>
       </div>
 
@@ -511,6 +511,7 @@ function CardModal({
             <h3 className="text-2xl font-semibold text-orchid-hush">{card.name}</h3>
             <p className="text-xs text-ash-grey/80">
               {selectedPrinting.setName} · {selectedPrinting.setCode} #{selectedPrinting.collectorNumber}
+              {formatPrice(selectedPrinting.priceUsd) ? ` · ${formatPrice(selectedPrinting.priceUsd)}` : ""}
             </p>
           </div>
           <button type="button" onClick={onClose} className="font-mono text-xs uppercase tracking-[0.16em] text-ash-grey/80 transition hover:text-orchid-hush">
@@ -525,7 +526,11 @@ function CardModal({
             ) : printings ? (
               <>
                 <div className={`grid gap-3 ${selectedPrinting.cardFaces?.length && selectedPrinting.cardFaces.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                  {selectedPrinting.cardFaces?.length ? selectedPrinting.cardFaces.map((face) => <CardImage key={face.name} src={face.imageUri} alt={face.name} />) : <CardImage src={selectedPrinting.imageUri} alt={selectedPrinting.name} />}
+                  {selectedPrinting.cardFaces?.length
+                    ? selectedPrinting.cardFaces.map((face) => (
+                        <CardImage key={face.name} src={face.imageUri} alt={face.name} className={MODAL_IMAGE_CLASS} fallbackClassName={MODAL_IMAGE_FALLBACK_CLASS} />
+                      ))
+                    : <CardImage src={selectedPrinting.imageUri} alt={selectedPrinting.name} className={MODAL_IMAGE_CLASS} fallbackClassName={MODAL_IMAGE_FALLBACK_CLASS} />}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -613,12 +618,4 @@ function CardModal({
       </div>
     </div>
   );
-}
-
-function CardImage({ src, alt }: { src?: string; alt: string }) {
-  if (!src) {
-    return <div className="tech-row flex min-h-64 items-center justify-center px-4 py-6 text-sm text-ash-grey/80">No image available.</div>;
-  }
-
-  return <img src={src} alt={alt} className="w-full rounded-[4px] border border-orchid-hush/20 shadow-[0_18px_40px_rgba(0,0,0,0.24)]" />;
 }

@@ -1,5 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
+
+import { createPortal } from "react-dom";
+import CardImage from "@/components/cards/CardImage";
 
 export type CardHoverFace = {
   name: string;
@@ -25,7 +27,11 @@ export default function CardHoverPreview({ card, position }: CardHoverPreviewPro
 
   const hasFaces = Boolean(card.cardFaces?.length);
 
-  return (
+  // Portaled to body: this floats relative to the viewport, but ancestors
+  // like .tech-panel set a non-none clip-path, which establishes a new
+  // containing block for position:fixed descendants and would otherwise
+  // pin this to the (often much taller) panel box instead of the screen.
+  return createPortal(
     <div
       className="pointer-events-none fixed z-40 hidden w-[18rem] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto sm:block"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
@@ -49,14 +55,7 @@ export default function CardHoverPreview({ card, position }: CardHoverPreviewPro
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
-}
-
-function CardImage({ src, alt }: { src?: string; alt: string }) {
-  if (!src) {
-    return <div className="flex min-h-64 items-center justify-center rounded-lg border border-foreground/10 px-4 py-6 text-sm text-ash-grey/80">No image available.</div>;
-  }
-
-  return <img src={src} alt={alt} className="w-full rounded-lg border border-foreground/10 shadow-[0_14px_30px_rgba(0,0,0,0.22)]" />;
 }

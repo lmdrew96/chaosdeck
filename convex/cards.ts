@@ -76,6 +76,7 @@ const cardFields = {
 
 type ScryfallCardFace = {
   name: string;
+  oracle_id?: string;
   mana_cost?: string;
   type_line?: string;
   oracle_text?: string;
@@ -86,7 +87,9 @@ type ScryfallCardFace = {
 };
 
 type ScryfallCard = {
-  oracle_id: string;
+  // Absent on "reversible_card" layout — each face carries its own
+  // oracle_id instead (see toPublicCard's fallback).
+  oracle_id?: string;
   name: string;
   layout: string;
   mana_cost?: string;
@@ -116,7 +119,7 @@ function toPublicCard(raw: ScryfallCard) {
   const front = raw.card_faces?.[0];
   const cmc = raw.cmc ?? 0;
   return {
-    oracleId: raw.oracle_id,
+    oracleId: raw.oracle_id ?? front?.oracle_id ?? "",
     name: raw.name,
     manaCost: raw.mana_cost ?? front?.mana_cost ?? undefined,
     cmc,
@@ -235,7 +238,7 @@ export const searchCards = action({
   handler: async (_, { query, cursor }) => {
     const page = cursor ? await fetchScryfallSearch(cursor, "cards", true) : await fetchScryfallSearch(query, "cards");
     return {
-      cards: page.data.map(toPublicCard),
+      cards: page.data.map(toPublicCard).filter((card) => card.oracleId),
       nextPage: page.nextPage,
     };
   },
@@ -274,7 +277,11 @@ export const getCardPrintings = action({
     return {
       oracleId,
       name: first.name,
-      printings: printings.data.map(toPublicCard),
+      // Reversible-layout printings (e.g. novelty reversible basic lands)
+      // can resolve to a different face's oracle_id than the one searched
+      // for — drop any that didn't resolve at all rather than fail the
+      // whole call.
+      printings: printings.data.map(toPublicCard).filter((card) => card.oracleId),
       rulings,
     };
   },

@@ -26,6 +26,7 @@ const NON_PLAYABLE_LAYOUTS = new Set([
 
 type ScryfallCardFace = {
   name: string;
+  oracle_id?: string;
   mana_cost?: string;
   type_line?: string;
   oracle_text?: string;
@@ -37,7 +38,9 @@ type ScryfallCardFace = {
 };
 
 type ScryfallCard = {
-  oracle_id: string;
+  // Absent on "reversible_card" layout — each face carries its own
+  // oracle_id instead (see toCardDoc's fallback).
+  oracle_id?: string;
   name: string;
   layout: string;
   mana_cost?: string;
@@ -66,7 +69,7 @@ type ScryfallCard = {
 function toCardDoc(raw: ScryfallCard) {
   const front = raw.card_faces?.[0];
   return {
-    oracleId: raw.oracle_id,
+    oracleId: raw.oracle_id ?? front?.oracle_id ?? "",
     name: raw.name,
     manaCost: raw.mana_cost ?? front?.mana_cost ?? undefined,
     cmc: raw.cmc,
@@ -142,7 +145,9 @@ export const ingestOracleCards = internalAction({
       if (!trimmed) continue;
       const raw = JSON.parse(trimmed) as ScryfallCard;
       if (NON_PLAYABLE_LAYOUTS.has(raw.layout)) continue;
-      batch.push(toCardDoc(raw));
+      const doc = toCardDoc(raw);
+      if (!doc.oracleId) continue;
+      batch.push(doc);
       if (batch.length >= BATCH_SIZE) {
         await ctx.runMutation(internal.cards.upsertBatch, { cards: batch });
         total += batch.length;

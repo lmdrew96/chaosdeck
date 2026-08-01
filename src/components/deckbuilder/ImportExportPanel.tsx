@@ -97,7 +97,7 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
           )}
         </div>
 
-        {imported && <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-teal">Imported.</p>}
+        {imported && <p className="font-mono text-xs uppercase tracking-[0.2em] text-ash-grey">Imported.</p>}
 
         {resolved && (
           <div className="tech-row flex flex-col gap-2 px-3 py-2 pl-4">
