@@ -1,14 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAction } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import CardImage from "@/components/cards/CardImage";
 import type { CardHoverPreviewData } from "@/components/cards/CardHoverPreview";
 
-// A lighter-weight counterpart to CardBrowser's CardModal — no printings or
-// rulings lookup, just the same image + oracle text a hover preview shows,
-// as a tap target for touch devices where hover never fires.
-export default function CardDetailModal({ card, onClose }: { card: CardHoverPreviewData; onClose: () => void }) {
+type Ruling = { publishedAt: string; comment: string };
+
+// A lighter-weight counterpart to CardBrowser's CardModal — same image +
+// oracle text a hover preview shows, as a tap target for touch devices
+// where hover never fires. Rulings are opt-in via `oracleId`: callers that
+// only have hover-preview data (no oracleId) get the original no-lookup
+// behavior unchanged.
+export default function CardDetailModal({ card, oracleId, onClose }: { card: CardHoverPreviewData; oracleId?: string; onClose: () => void }) {
+  const getCardPrintings = useAction(api.cards.getCardPrintings);
+  const [rulings, setRulings] = useState<Ruling[] | null>(null);
+  // Lazy-initialized from the mount-time prop (mirrors CardBrowser's
+  // CardModal): this component remounts fresh each time a card's details
+  // open, so there's no later prop change to react to.
+  const [rulingsLoading, setRulingsLoading] = useState(() => Boolean(oracleId));
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -16,6 +29,24 @@ export default function CardDetailModal({ card, onClose }: { card: CardHoverPrev
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    if (!oracleId) return;
+    let cancelled = false;
+    void getCardPrintings({ oracleId })
+      .then((details) => {
+        if (!cancelled) setRulings(details.rulings);
+      })
+      .catch(() => {
+        if (!cancelled) setRulings(null);
+      })
+      .finally(() => {
+        if (!cancelled) setRulingsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [oracleId, getCardPrintings]);
 
   const hasFaces = Boolean(card.cardFaces?.length);
 
@@ -54,6 +85,26 @@ export default function CardDetailModal({ card, onClose }: { card: CardHoverPrev
             <p className="whitespace-pre-wrap">{card.oracleText ?? "No oracle text available."}</p>
           )}
         </div>
+
+        {oracleId ? (
+          <div className="mt-4 flex flex-col gap-2">
+            <h4 className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">Rulings</h4>
+            <div className="tech-row flex flex-col gap-2 px-3 py-3 text-sm text-ash-grey/80">
+              {rulingsLoading ? (
+                <p>Loading rulings…</p>
+              ) : rulings?.length ? (
+                rulings.map((ruling) => (
+                  <div key={`${ruling.publishedAt}-${ruling.comment}`} className="space-y-1">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-orchid-hush/70">{ruling.publishedAt}</p>
+                    <p className="whitespace-pre-wrap">{ruling.comment}</p>
+                  </div>
+                ))
+              ) : (
+                <p>No rulings found.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,

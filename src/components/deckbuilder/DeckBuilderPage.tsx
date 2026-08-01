@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -9,6 +10,7 @@ import DeckEntriesPanel from "@/components/deckbuilder/DeckEntriesPanel";
 import DeckStats from "@/components/deckbuilder/DeckStats";
 import EDHRecommendations from "@/components/deckbuilder/EDHRecommendations";
 import ImportExportPanel from "@/components/deckbuilder/ImportExportPanel";
+import NewGameModal from "@/components/playtester/NewGameModal";
 
 const FORMAT_OPTIONS = ["commander", "modern", "pioneer", "standard", "legacy", "pauper"];
 
@@ -18,6 +20,7 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
   const deck = useQuery(api.decks.getDeck, isAuthenticated ? { deckId } : "skip");
   const setFormat = useMutation(api.decks.setFormat);
   const renameDeck = useMutation(api.decks.renameDeck);
+  const [playtestOpen, setPlaytestOpen] = useState(false);
 
   if (isConvexAuthLoading || (!isAuthenticated && deck === undefined)) {
     return (
@@ -69,18 +72,25 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
             className="bg-transparent text-3xl font-semibold text-orchid-hush outline-none"
           />
         </div>
-        <select
-          value={deck.format}
-          onChange={(e) => void setFormat({ deckId, format: e.target.value })}
-          className="tech-control px-3 py-2 font-mono text-sm uppercase tracking-[0.12em] text-orchid-hush/80 outline-none"
-        >
-          {FORMAT_OPTIONS.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={deck.format}
+            onChange={(e) => void setFormat({ deckId, format: e.target.value })}
+            className="tech-control px-3 py-2 font-mono text-sm uppercase tracking-[0.12em] text-orchid-hush/80 outline-none"
+          >
+            {FORMAT_OPTIONS.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+          <button type="button" onClick={() => setPlaytestOpen(true)} className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+            Playtest
+          </button>
+        </div>
       </div>
+
+      {playtestOpen ? <NewGameModal deckId={deckId} deckName={deck.name} onClose={() => setPlaytestOpen(false)} /> : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="flex flex-col gap-4">

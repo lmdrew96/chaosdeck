@@ -1,72 +1,155 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, MutationCtx } from "./_generated/server";
 import { shuffle, drawCards, moveCardZone } from "./cardInstances";
+import { requireAuthenticatedUser, requireDeckAccess } from "./decks";
+import { Id } from "./_generated/dataModel";
 
 const PHASE_ORDER = ["untap", "upkeep", "draw", "main1", "combat", "main2", "end"] as const;
 
+const ALL_ZONES = ["library", "hand", "battlefield", "graveyard", "exile", "stack", "command"] as const;
+
 const EMPTY_MANA_POOL = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
 
+const gamePlayerInput = v.object({
+  displayName: v.string(),
+  // Flat list, one entry per copy (a 4-of is 4 entries) — where these
+  // oracleIds come from (deckbuilder, import) is out of scope here.
+  deckOracleIds: v.array(v.string()),
+  // Starts in the command zone instead of being shuffled into the
+  // library — usually one card, two for partner/background commanders.
+  commanderOracleIds: v.optional(v.array(v.string())),
+});
+
+// Shared by createGame and startPlaytestFromDecks — a plain helper so both
+// entry points insert the game/players/library in one transaction.
+async function insertGame(
+  ctx: MutationCtx,
+  players: { displayName: string; deckOracleIds: string[]; commanderOracleIds?: string[] }[],
+  startingLife?: number,
+): Promise<Id<"games">> {
+  // 1 player supports solo goldfishing (the primary use case); 2+ is a
+  // real multiplayer pod. Convex reactivity means every seat can be
+  // opened from its own device without any extra session plumbing.
+  if (players.length < 1) {
+    throw new Error("A game needs at least 1 player");
+  }
+
+  const gameId = await ctx.db.insert("games", {
+    status: "active",
+    phase: "untap",
+    turnNumber: 1,
+    activePlayerIndex: 0,
+    playerCount: players.length,
+    startingLife,
+  });
+
+  const playerIds = [];
+  for (let seatIndex = 0; seatIndex < players.length; seatIndex++) {
+    const playerId = await ctx.db.insert("players", {
+      gameId,
+      seatIndex,
+      displayName: players[seatIndex].displayName,
+      life: startingLife ?? 20,
+      manaPool: EMPTY_MANA_POOL,
+      commanderDamage: {},
+      hasLost: false,
+      landsPlayedThisTurn: 0,
+      mutedPointerTypes: [],
+    });
+    playerIds.push(playerId);
+  }
+
+  for (let seatIndex = 0; seatIndex < players.length; seatIndex++) {
+    const playerId = playerIds[seatIndex];
+
+    const commanders = players[seatIndex].commanderOracleIds ?? [];
+    for (let i = 0; i < commanders.length; i++) {
+      await ctx.db.insert("cardInstances", {
+        gameId,
+        ownerId: playerId,
+        zone: "command",
+        cardOracleId: commanders[i],
+        position: i,
+        tapped: false,
+        summoningSick: false,
+        counters: {},
+        isCommander: true,
+      });
+    }
+
+    const shuffled = shuffle(players[seatIndex].deckOracleIds);
+    for (let i = 0; i < shuffled.length; i++) {
+      await ctx.db.insert("cardInstances", {
+        gameId,
+        ownerId: playerId,
+        zone: "library",
+        cardOracleId: shuffled[i],
+        position: i,
+        tapped: false,
+        summoningSick: false,
+        counters: {},
+      });
+    }
+    await drawCards(ctx, playerId, 7);
+  }
+
+  return gameId;
+}
+
 export const createGame = mutation({
+  args: {
+    startingLife: v.optional(v.number()),
+    players: v.array(gamePlayerInput),
+  },
+  returns: v.id("games"),
+  handler: async (ctx, { players, startingLife }) => {
+    return await insertGame(ctx, players, startingLife);
+  },
+});
+
+// Convenience entry point for the playtester's "New game" flow: resolves
+// each seat's deck (its "deck" + "commander" sections, quantity-expanded)
+// into the flat oracleId list insertGame needs, instead of making the
+// client fetch and flatten deck entries itself. A seat with no deckId
+// (a placeholder pod member) just gets an empty library.
+export const startPlaytestFromDecks = mutation({
   args: {
     startingLife: v.optional(v.number()),
     players: v.array(
       v.object({
         displayName: v.string(),
-        // Flat list, one entry per copy (a 4-of is 4 entries) — where these
-        // oracleIds come from (deckbuilder, import) is out of scope here.
-        deckOracleIds: v.array(v.string()),
+        deckId: v.optional(v.id("decks")),
       }),
     ),
   },
   returns: v.id("games"),
   handler: async (ctx, { players, startingLife }) => {
-    if (players.length < 2) {
-      throw new Error("A game needs at least 2 players");
-    }
+    await requireAuthenticatedUser(ctx);
 
-    const gameId = await ctx.db.insert("games", {
-      status: "active",
-      phase: "untap",
-      turnNumber: 1,
-      activePlayerIndex: 0,
-      playerCount: players.length,
-    });
-
-    const playerIds = [];
-    for (let seatIndex = 0; seatIndex < players.length; seatIndex++) {
-      const playerId = await ctx.db.insert("players", {
-        gameId,
-        seatIndex,
-        displayName: players[seatIndex].displayName,
-        life: startingLife ?? 20,
-        manaPool: EMPTY_MANA_POOL,
-        commanderDamage: {},
-        hasLost: false,
-        landsPlayedThisTurn: 0,
-        mutedPointerTypes: [],
-      });
-      playerIds.push(playerId);
-    }
-
-    for (let seatIndex = 0; seatIndex < players.length; seatIndex++) {
-      const playerId = playerIds[seatIndex];
-      const shuffled = shuffle(players[seatIndex].deckOracleIds);
-      for (let i = 0; i < shuffled.length; i++) {
-        await ctx.db.insert("cardInstances", {
-          gameId,
-          ownerId: playerId,
-          zone: "library",
-          cardOracleId: shuffled[i],
-          position: i,
-          tapped: false,
-          summoningSick: false,
-          counters: {},
-        });
+    const resolved = [];
+    for (const player of players) {
+      if (!player.deckId) {
+        resolved.push({ displayName: player.displayName, deckOracleIds: [] });
+        continue;
       }
-      await drawCards(ctx, playerId, 7);
+      await requireDeckAccess(ctx, player.deckId);
+      const entries = await ctx.db
+        .query("deckEntries")
+        .withIndex("by_deck", (q) => q.eq("deckId", player.deckId!))
+        .take(500);
+      const deckOracleIds: string[] = [];
+      const commanderOracleIds: string[] = [];
+      for (const entry of entries) {
+        if (entry.section === "deck") {
+          for (let i = 0; i < entry.quantity; i++) deckOracleIds.push(entry.cardOracleId);
+        } else if (entry.section === "commander") {
+          for (let i = 0; i < entry.quantity; i++) commanderOracleIds.push(entry.cardOracleId);
+        }
+      }
+      resolved.push({ displayName: player.displayName, deckOracleIds, commanderOracleIds });
     }
 
-    return gameId;
+    return await insertGame(ctx, resolved, startingLife);
   },
 });
 
@@ -128,6 +211,123 @@ export const advancePhase = mutation({
         await drawCards(ctx, activePlayer._id, 1);
       }
     }
+
+    return null;
+  },
+});
+
+// A misclick correction, not an undo: it only moves the phase/turn pointer
+// backward. It doesn't re-tap permanents, un-draw cards, or restore mana
+// that advancePhase already cleared — those are real one-way game events,
+// not artifacts of which phase indicator is showing.
+export const previousPhase = mutation({
+  args: { gameId: v.id("games") },
+  returns: v.null(),
+  handler: async (ctx, { gameId }) => {
+    const game = await ctx.db.get(gameId);
+    if (!game) throw new Error("Game not found");
+
+    if (game.turnNumber === 1 && game.phase === "untap") {
+      return null;
+    }
+
+    const currentIdx = PHASE_ORDER.indexOf(game.phase);
+    const prevIdx = (currentIdx - 1 + PHASE_ORDER.length) % PHASE_ORDER.length;
+    const turnRetreats = currentIdx === 0;
+    const prevActivePlayerIndex = turnRetreats
+      ? (game.activePlayerIndex - 1 + game.playerCount) % game.playerCount
+      : game.activePlayerIndex;
+    const prevTurnNumber = turnRetreats ? game.turnNumber - 1 : game.turnNumber;
+
+    await ctx.db.patch(gameId, {
+      phase: PHASE_ORDER[prevIdx],
+      activePlayerIndex: prevActivePlayerIndex,
+      turnNumber: prevTurnNumber,
+    });
+    return null;
+  },
+});
+
+// Resets the game in place — same gameId, so the URL and every device's
+// seat choice stay valid — rather than creating a new game. Every card
+// each player currently controls (across every zone) is collected, tokens
+// are dropped (they cease to exist once they'd leave the battlefield),
+// commanders go back to the command zone by their isCommander flag, and
+// the rest is reshuffled into a fresh library with a new opening hand.
+export const restartGame = mutation({
+  args: { gameId: v.id("games") },
+  returns: v.null(),
+  handler: async (ctx, { gameId }) => {
+    const game = await ctx.db.get(gameId);
+    if (!game) throw new Error("Game not found");
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_game", (q) => q.eq("gameId", gameId))
+      .collect();
+
+    for (const player of players) {
+      const commanderOracleIds: string[] = [];
+      const deckOracleIds: string[] = [];
+
+      for (const z of ALL_ZONES) {
+        const instances = await ctx.db
+          .query("cardInstances")
+          .withIndex("by_owner_zone_position", (q) => q.eq("ownerId", player._id).eq("zone", z))
+          .take(500);
+        for (const instance of instances) {
+          if (instance.cardOracleId) {
+            (instance.isCommander ? commanderOracleIds : deckOracleIds).push(instance.cardOracleId);
+          }
+          await ctx.db.delete(instance._id);
+        }
+      }
+
+      for (let i = 0; i < commanderOracleIds.length; i++) {
+        await ctx.db.insert("cardInstances", {
+          gameId,
+          ownerId: player._id,
+          zone: "command",
+          cardOracleId: commanderOracleIds[i],
+          position: i,
+          tapped: false,
+          summoningSick: false,
+          counters: {},
+          isCommander: true,
+        });
+      }
+
+      const shuffled = shuffle(deckOracleIds);
+      for (let i = 0; i < shuffled.length; i++) {
+        await ctx.db.insert("cardInstances", {
+          gameId,
+          ownerId: player._id,
+          zone: "library",
+          cardOracleId: shuffled[i],
+          position: i,
+          tapped: false,
+          summoningSick: false,
+          counters: {},
+        });
+      }
+
+      await ctx.db.patch(player._id, {
+        life: game.startingLife ?? 20,
+        manaPool: EMPTY_MANA_POOL,
+        commanderDamage: {},
+        hasLost: false,
+        landsPlayedThisTurn: 0,
+      });
+
+      await drawCards(ctx, player._id, 7);
+    }
+
+    await ctx.db.patch(gameId, {
+      status: "active",
+      phase: "untap",
+      turnNumber: 1,
+      activePlayerIndex: 0,
+    });
 
     return null;
   },

@@ -130,6 +130,10 @@ export default defineSchema({
     turnNumber: v.number(),
     activePlayerIndex: v.number(),
     playerCount: v.number(),
+    // Recorded at creation so a later restart resets life to the same
+    // total instead of falling back to a hardcoded default. Optional
+    // because games created before this field existed don't have it.
+    startingLife: v.optional(v.number()),
   }),
 
   players: defineTable({
@@ -165,6 +169,11 @@ export default defineSchema({
     tokenTypeLine: v.optional(v.string()),
     tokenPower: v.optional(v.string()),
     tokenToughness: v.optional(v.string()),
+    // Set at game creation for commander-seeded instances only. Restart
+    // needs this to tell "goes back to the command zone" cards apart from
+    // regular deck cards once they've scattered across zones mid-game —
+    // current zone alone can't reliably answer that.
+    isCommander: v.optional(v.boolean()),
     // Library order — lower sorts first ("top of library"). Mutable (not
     // creation-time-derived) so a mid-game shuffle can re-randomize order
     // without deleting and reinserting every card.

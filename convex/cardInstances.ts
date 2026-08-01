@@ -80,6 +80,37 @@ export async function moveCardZone(
   await ctx.db.patch(instanceId, patch);
 }
 
+// Manual draw for effects the auto-draw-on-draw-step logic doesn't cover
+// (card-draw spells, mulligans) — advancePhase's own draw step calls
+// drawCards directly rather than through this wrapper.
+export const draw = mutation({
+  args: { playerId: v.id("players"), count: v.optional(v.number()) },
+  returns: v.null(),
+  handler: async (ctx, { playerId, count }) => {
+    await drawCards(ctx, playerId, count ?? 1);
+    return null;
+  },
+});
+
+// Re-randomizes a player's library order in place — needed for shuffle
+// effects and post-search cleanup mid-game (createGame does its own
+// shuffle-then-insert at game start and doesn't need this).
+export const shuffleLibrary = mutation({
+  args: { playerId: v.id("players") },
+  returns: v.null(),
+  handler: async (ctx, { playerId }) => {
+    const library = await ctx.db
+      .query("cardInstances")
+      .withIndex("by_owner_zone_position", (q) => q.eq("ownerId", playerId).eq("zone", "library"))
+      .take(300);
+    const order = shuffle(library.map((instance) => instance._id));
+    for (let i = 0; i < order.length; i++) {
+      await ctx.db.patch(order[i], { position: i });
+    }
+    return null;
+  },
+});
+
 export const moveCard = mutation({
   args: {
     instanceId: v.id("cardInstances"),

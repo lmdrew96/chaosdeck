@@ -13,7 +13,7 @@ const deckSection = v.union(
 
 type DeckCtx = QueryCtx | MutationCtx;
 
-const requireAuthenticatedUser = async (ctx: DeckCtx) => {
+export const requireAuthenticatedUser = async (ctx: DeckCtx) => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
     throw new Error("Not authenticated");
@@ -21,7 +21,7 @@ const requireAuthenticatedUser = async (ctx: DeckCtx) => {
   return identity;
 };
 
-const requireDeckAccess = async (ctx: DeckCtx, deckId: Id<"decks">) => {
+export const requireDeckAccess = async (ctx: DeckCtx, deckId: Id<"decks">) => {
   const identity = await requireAuthenticatedUser(ctx);
   const deck = await ctx.db.get(deckId);
   if (!deck) {
