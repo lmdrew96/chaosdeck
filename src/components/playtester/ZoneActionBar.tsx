@@ -44,7 +44,7 @@ export default function ZoneActionBar({
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const name = instance.cardOracleId ? card?.name : instance.tokenName ?? "Token";
-  const typeLine = card?.typeLine ?? card?.cardFaces?.[0]?.typeLine;
+  const typeLine = instance.cardOracleId ? card?.typeLine ?? card?.cardFaces?.[0]?.typeLine : instance.tokenTypeLine;
   const isLand = card ? (typeLine ?? "").includes("Land") : false;
   const manaCost = card?.manaCost ?? card?.cardFaces?.[0]?.manaCost;
   const oracleText = card?.oracleText ?? card?.cardFaces?.[0]?.oracleText;

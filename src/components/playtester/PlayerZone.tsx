@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Doc, Id } from "../../../convex/_generated/dataModel";
 import CardTile from "@/components/playtester/CardTile";
 import PlayerVitals from "@/components/playtester/PlayerVitals";
 import PointerBar from "@/components/playtester/PointerBar";
+import TokenCreatorModal from "@/components/playtester/TokenCreatorModal";
 
 type Zone = Doc<"cardInstances">["zone"];
 type Selection = { instanceId: Id<"cardInstances">; zone: Zone } | null;
@@ -42,6 +44,7 @@ export default function PlayerZone({
   onOpenZoneViewer: (zone: "library" | "graveyard" | "exile" | "command") => void;
 }) {
   const isSelected = (instance: Doc<"cardInstances">) => selection?.instanceId === instance._id;
+  const [tokenModalOpen, setTokenModalOpen] = useState(false);
 
   return (
     <div className={`tech-panel flex flex-col gap-3 p-3 sm:p-4 ${isActivePlayer ? "ring-1 ring-orchid-hush/50" : ""}`}>
@@ -50,7 +53,18 @@ export default function PlayerZone({
       {isLocalSeat ? <PointerBar gameId={gameId} player={player} /> : null}
 
       <div className="flex flex-col gap-1">
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ash-grey/60">Battlefield</p>
+        <div className="flex items-center justify-between">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ash-grey/60">Battlefield</p>
+          {isLocalSeat ? (
+            <button
+              type="button"
+              onClick={() => setTokenModalOpen(true)}
+              className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash-grey/80 transition hover:text-orchid-hush"
+            >
+              + Token
+            </button>
+          ) : null}
+        </div>
         <div className="tech-row flex min-h-20 flex-wrap gap-2 p-2">
           {battlefield.length === 0 ? <p className="px-1 py-1 text-xs text-ash-grey/60">Empty.</p> : null}
           {battlefield.map((instance) => (
@@ -84,6 +98,8 @@ export default function PlayerZone({
         <ZonePile label="Exile" count={exile.length} onOpen={() => onOpenZoneViewer("exile")} />
         <ZonePile label="Command" count={command.length} onOpen={() => onOpenZoneViewer("command")} />
       </div>
+
+      {tokenModalOpen ? <TokenCreatorModal gameId={gameId} ownerId={player._id} onClose={() => setTokenModalOpen(false)} /> : null}
     </div>
   );
 }

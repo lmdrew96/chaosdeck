@@ -163,6 +163,54 @@ export const updateCounters = mutation({
   },
 });
 
+// Manual token tracking — no automated trigger detection (see pointers.ts's
+// module comment: event-based triggers need an event log this schema
+// doesn't have yet), so the player enters what an ability created.
+export const createTokens = mutation({
+  args: {
+    gameId: v.id("games"),
+    ownerId: v.id("players"),
+    quantity: v.number(),
+    tokenName: v.string(),
+    tokenTypeLine: v.optional(v.string()),
+    tokenPower: v.optional(v.string()),
+    tokenToughness: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, { gameId, ownerId, quantity, tokenName, tokenTypeLine, tokenPower, tokenToughness }) => {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+      throw new Error("Token quantity must be between 1 and 20");
+    }
+    if (!tokenName.trim()) {
+      throw new Error("Token name is required");
+    }
+
+    const topOfBattlefield = await ctx.db
+      .query("cardInstances")
+      .withIndex("by_owner_zone_position", (q) => q.eq("ownerId", ownerId).eq("zone", "battlefield"))
+      .order("desc")
+      .first();
+    let position = (topOfBattlefield?.position ?? -1) + 1;
+
+    for (let i = 0; i < quantity; i++) {
+      await ctx.db.insert("cardInstances", {
+        gameId,
+        ownerId,
+        zone: "battlefield",
+        tokenName: tokenName.trim(),
+        tokenTypeLine,
+        tokenPower,
+        tokenToughness,
+        position: position++,
+        tapped: false,
+        summoningSick: true,
+        counters: {},
+      });
+    }
+    return null;
+  },
+});
+
 export const listByGameAndZone = query({
   args: { gameId: v.id("games"), zone },
   handler: async (ctx, { gameId, zone: z }) => {
