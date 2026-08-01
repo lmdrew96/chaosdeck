@@ -157,6 +157,7 @@ export default function PlaytestBoard({ gameId }: { gameId: Id<"games"> }) {
   const mySeatPlayerId = mySeatChoice && mySeatChoice !== "spectate" ? (mySeatChoice as Id<"players">) : null;
   const selectedInstance = selection ? findInstance(selection.instanceId) : undefined;
   const activePlayer = players.find((p) => p.seatIndex === game.activePlayerIndex);
+  const selectedOwner = selectedInstance ? players.find((p) => p._id === selectedInstance.ownerId) : undefined;
 
   const selectCard = (instance: Doc<"cardInstances">) => {
     setSelection((current) => (current?.instanceId === instance._id ? null : { instanceId: instance._id, zone: instance.zone }));
@@ -237,7 +238,15 @@ export default function PlaytestBoard({ gameId }: { gameId: Id<"games"> }) {
         />
       ) : null}
 
-      {selectedInstance ? <ZoneActionBar instance={selectedInstance} onClose={() => setSelection(null)} /> : null}
+      {selectedInstance ? (
+        <ZoneActionBar
+          instance={selectedInstance}
+          gamePhase={game.phase}
+          isOwnerActivePlayer={selectedOwner?.seatIndex === game.activePlayerIndex}
+          landsPlayedThisTurn={selectedOwner?.landsPlayedThisTurn ?? 0}
+          onClose={() => setSelection(null)}
+        />
+      ) : null}
     </div>
   );
 }

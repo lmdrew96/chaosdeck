@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { Doc } from "../../../convex/_generated/dataModel";
 import ManaCost from "@/components/deckbuilder/manaCost";
 import CardDetailModal from "@/components/cards/CardDetailModal";
+import { checkLandTiming, checkSorcerySpeedTiming } from "@/components/playtester/timingRules";
 
 const ZONE_LABELS: Record<string, string> = {
   library: "Library",
@@ -21,7 +22,19 @@ const ZONE_LABELS: Record<string, string> = {
 // or stack resolution, so it's left out of the UI's move targets.
 const DESTINATION_ORDER = ["battlefield", "hand", "graveyard", "exile", "library", "command"] as const;
 
-export default function ZoneActionBar({ instance, onClose }: { instance: Doc<"cardInstances">; onClose: () => void }) {
+export default function ZoneActionBar({
+  instance,
+  gamePhase,
+  isOwnerActivePlayer,
+  landsPlayedThisTurn,
+  onClose,
+}: {
+  instance: Doc<"cardInstances">;
+  gamePhase: Doc<"games">["phase"];
+  isOwnerActivePlayer: boolean;
+  landsPlayedThisTurn: number;
+  onClose: () => void;
+}) {
   const card = useQuery(api.cards.getByOracleId, instance.cardOracleId ? { oracleId: instance.cardOracleId } : "skip");
   const moveCard = useMutation(api.cardInstances.moveCard);
   const setTapped = useMutation(api.cardInstances.setTapped);
@@ -37,8 +50,18 @@ export default function ZoneActionBar({ instance, onClose }: { instance: Doc<"ca
 
   const moveTo = (toZone: (typeof DESTINATION_ORDER)[number]) => {
     if (instance.zone === "hand" && toZone === "battlefield" && isLand) {
+      const warning = checkLandTiming(gamePhase, isOwnerActivePlayer, landsPlayedThisTurn);
+      if (warning && !window.confirm(warning)) return;
       void playLand({ instanceId: instance._id, playerId: instance.ownerId });
     } else {
+      // Casting a card is only unambiguous for hand -> battlefield (a
+      // permanent spell) — hand -> graveyard also covers plain discards, so
+      // sorcery-speed timing isn't checked there to avoid warning on a move
+      // that isn't actually a cast.
+      if (instance.zone === "hand" && toZone === "battlefield" && card && !isLand) {
+        const warning = checkSorcerySpeedTiming(card, gamePhase, isOwnerActivePlayer);
+        if (warning && !window.confirm(warning)) return;
+      }
       void moveCard({ instanceId: instance._id, toZone });
     }
     onClose();
