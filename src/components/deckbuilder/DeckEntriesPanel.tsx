@@ -98,6 +98,11 @@ export default function DeckEntriesPanel({
   };
   for (const entry of entries) bySection[entry.section].push(entry);
 
+  const totalPriceUsd = entries.reduce((sum, entry) => {
+    const price = entry.card?.priceUsd ? Number(entry.card.priceUsd) : 0;
+    return sum + price * entry.quantity;
+  }, 0);
+
   const totalCount = (section: Section) => sectionCardCount(bySection[section]);
   const toggleGroup = (section: Section, groupName: string) => {
     const key = `${section}:${groupName}`;
@@ -133,7 +138,14 @@ export default function DeckEntriesPanel({
   return (
     <div className="tech-panel flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">Deck list</h2>
+        <div className="flex items-baseline gap-2">
+          <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">Deck list</h2>
+          {totalPriceUsd > 0 ? (
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ash-grey/80">
+              Est. ${totalPriceUsd.toFixed(2)}
+            </span>
+          ) : null}
+        </div>
         <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           <span>Sort</span>
           <select
