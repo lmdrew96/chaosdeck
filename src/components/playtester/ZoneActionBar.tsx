@@ -7,6 +7,7 @@ import { Doc } from "../../../convex/_generated/dataModel";
 import ManaCost from "@/components/deckbuilder/manaCost";
 import CardDetailModal from "@/components/cards/CardDetailModal";
 import { checkLandTiming, checkSorcerySpeedTiming } from "@/components/playtester/timingRules";
+import { getTypeGroupBadges, hasModifiedCounter } from "@/lib/cardTypeGroups";
 
 const ZONE_LABELS: Record<string, string> = {
   library: "Library",
@@ -48,6 +49,10 @@ export default function ZoneActionBar({
   const isLand = card ? (typeLine ?? "").includes("Land") : false;
   const manaCost = card?.manaCost ?? card?.cardFaces?.[0]?.manaCost;
   const oracleText = card?.oracleText ?? card?.cardFaces?.[0]?.oracleText;
+  const typeGroupBadges: string[] = [
+    ...getTypeGroupBadges(typeLine),
+    ...(instance.zone === "battlefield" && hasModifiedCounter(instance.counters) ? ["Modified"] : []),
+  ];
 
   const moveTo = (toZone: (typeof DESTINATION_ORDER)[number]) => {
     if (instance.zone === "hand" && toZone === "battlefield" && isLand) {
@@ -89,6 +94,16 @@ export default function ZoneActionBar({
         </div>
 
         {typeLine ? <p className="text-xs text-ash-grey/80">{typeLine}</p> : null}
+
+        {typeGroupBadges.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {typeGroupBadges.map((group) => (
+              <span key={group} className="tech-badge border border-orchid-hush/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
+                {group}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         {oracleText ? (
           <p className="max-h-20 overflow-y-auto whitespace-pre-wrap text-xs text-ash-grey/90">{oracleText}</p>

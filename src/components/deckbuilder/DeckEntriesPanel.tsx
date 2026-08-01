@@ -8,6 +8,7 @@ import { Doc, Id } from "../../../convex/_generated/dataModel";
 import CardHoverPreview from "@/components/cards/CardHoverPreview";
 import { useCardPreview } from "@/components/cards/useCardPreview";
 import ManaCost from "./manaCost";
+import { getTypeGroupBadges } from "@/lib/cardTypeGroups";
 
 type Section = "deck" | "sideboard" | "commander" | "companion";
 
@@ -233,6 +234,11 @@ export default function DeckEntriesPanel({
                                     {badge.label}
                                   </span>
                                 )}
+                                {getTypeGroupBadges(entry.card?.typeLine).map((group) => (
+                                  <span key={group} className="tech-badge border border-orchid-hush/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-orchid-hush/80">
+                                    {group}
+                                  </span>
+                                ))}
                                 {entry.card?.manaCost ? (
                                   <span className="tech-badge flex items-center gap-1 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ash-grey/80">
                                     <ManaCost cost={entry.card.manaCost} />
