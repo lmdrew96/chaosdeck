@@ -64,7 +64,7 @@ export default function RootLayout({
         <ClerkProvider>
           <ServiceWorkerRegistration />
           <ThemeSelector />
-          <main className="min-h-full pt-24">
+          <main className="min-h-full pt-36 sm:pt-24">
             <ConvexClientProvider>{children}</ConvexClientProvider>
           </main>
         </ClerkProvider>
