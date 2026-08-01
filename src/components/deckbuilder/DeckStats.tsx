@@ -62,6 +62,25 @@ const QUANTITY_WORDS = new Set([
   "a", "an", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "x",
 ]);
 
+function tokenDescriptorFromWords(raw: string): string | null {
+  const words = raw.trim().split(/\s+/);
+  while (words.length && QUANTITY_WORDS.has(words[0].toLowerCase().replace(/,$/, ""))) {
+    words.shift();
+  }
+  const descriptor = words.join(" ").replace(/,$/, "").trim();
+  return descriptor || null;
+}
+
+// A second token type joined onto the first by "and" without repeating
+// "create", e.g. "...a 1/1 white Soldier creature token and a 1/1 green Elf
+// Warrior creature token." Only splits on "and" immediately followed by an
+// article/quantity word, so combined-color descriptors like "black and
+// green Wolf" (a single token type) aren't torn in two.
+const TOKEN_CONTINUATION_RE = new RegExp(
+  `\\band\\s+((?:${Array.from(QUANTITY_WORDS).join("|")})\\b[^.]*?)\\s+tokens?\\b`,
+  "gi",
+);
+
 // Best-effort extraction of "create ... token(s)" phrasing from oracle text.
 // This is pattern matching, not a rules parser — unusual templating (e.g.
 // "create a token that's a copy of...") won't produce a useful descriptor,
@@ -69,13 +88,19 @@ const QUANTITY_WORDS = new Set([
 function extractTokenDescriptors(text?: string): string[] {
   if (!text) return [];
   const descriptors: string[] = [];
-  for (const match of text.matchAll(/creates?\s+([^.]*?)\s+tokens?\b/gi)) {
-    const words = match[1].trim().split(/\s+/);
-    while (words.length && QUANTITY_WORDS.has(words[0].toLowerCase().replace(/,$/, ""))) {
-      words.shift();
-    }
-    const descriptor = words.join(" ").replace(/,$/, "").trim();
+  const CREATE_RE = /creates?\s+([^.]*?)\s+tokens?\b/gi;
+  let match: RegExpExecArray | null;
+  while ((match = CREATE_RE.exec(text))) {
+    const descriptor = tokenDescriptorFromWords(match[1]);
     if (descriptor) descriptors.push(descriptor);
+
+    const tailStart = match.index + match[0].length;
+    const periodIdx = text.indexOf(".", tailStart);
+    const tail = text.slice(tailStart, periodIdx === -1 ? undefined : periodIdx);
+    for (const contMatch of tail.matchAll(TOKEN_CONTINUATION_RE)) {
+      const contDescriptor = tokenDescriptorFromWords(contMatch[1]);
+      if (contDescriptor) descriptors.push(contDescriptor);
+    }
   }
   return descriptors;
 }
