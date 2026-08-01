@@ -58,6 +58,7 @@ type ScryfallCard = {
   image_uris?: { normal?: string };
   legalities: Record<string, string>;
   prices?: { usd?: string | null };
+  produced_mana?: string[];
   scryfall_uri: string;
   keywords?: string[];
   card_faces?: ScryfallCardFace[];
@@ -86,6 +87,7 @@ function toCardDoc(raw: ScryfallCard) {
     imageUri: raw.image_uris?.normal ?? front?.image_uris?.normal ?? undefined,
     legalities: raw.legalities ?? {},
     priceUsd: raw.prices?.usd ?? undefined,
+    producedMana: raw.produced_mana ?? undefined,
     scryfallUri: raw.scryfall_uri,
     // Whole-card property even for multi-face cards — Scryfall doesn't
     // split this per-face.

@@ -109,6 +109,10 @@ export default defineSchema({
     // time (e.g. standardbrawl, competitivebrawl showed up after v1 planning).
     legalities: v.record(v.string(), v.string()),
     priceUsd: v.optional(v.string()),
+    // Colors (+ "C" for colorless) this card can add to a mana pool —
+    // Scryfall's own field, covers lands, rocks, dorks, and anything else
+    // with a mana ability without us having to parse oracle text for it.
+    producedMana: v.optional(v.array(v.string())),
     scryfallUri: v.string(),
     // Needed for the pointer engine's "live instant-speed options" check —
     // Flash is a keyword, not trigger text, so oracleTagger.ts can't see it.

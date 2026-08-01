@@ -68,6 +68,7 @@ const cardFields = {
   imageUri: v.optional(v.string()),
   legalities: v.record(v.string(), v.string()),
   priceUsd: v.optional(v.string()),
+  producedMana: v.optional(v.array(v.string())),
   scryfallUri: v.string(),
   keywords: v.array(v.string()),
   tags: v.array(taggedClause),
