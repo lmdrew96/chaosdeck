@@ -117,6 +117,7 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
   }
   const maxSource = Math.max(1, ...Object.values(sourceCounts));
   const maxPip = Math.max(1, ...Object.values(pipCounts));
+  const usedColors = COLORS.filter((color) => sourceCounts[color] > 0 || pipCounts[color] > 0);
 
   // Draw probability uses only the "deck" section — the actual shuffled
   // library. Commander sits in the command zone and never gets drawn into,
@@ -191,39 +192,43 @@ export default function DeckStats({ deckId }: { deckId: Id<"decks"> }) {
         <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
           Mana sources vs. pip demand
         </h3>
-        <div className="flex flex-col gap-2">
-          {COLORS.map((color) => (
-            <div key={color} className="flex items-center gap-2">
-              <span
-                className="h-3 w-3 shrink-0 rounded-[3px] border border-orchid-hush/20 shadow-[0_0_10px_rgba(241,202,238,0.14)]"
-                style={{ backgroundColor: COLOR_SWATCH[color] }}
-              />
-              <span className="w-12 shrink-0 text-xs text-ash-grey/80">{COLOR_LABEL[color]}</span>
-              <div className="flex flex-1 flex-col gap-1">
-                <div className="flex items-center gap-1">
-                  <span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ash-grey/60">Sources</span>
-                  <div className="tech-meter h-1.5 flex-1 overflow-hidden rounded-[2px]">
-                    <div
-                      className="h-full rounded-[2px]"
-                      style={{ width: `${(sourceCounts[color] / maxSource) * 100}%`, backgroundColor: COLOR_SWATCH[color] }}
-                    />
+        {usedColors.length === 0 ? (
+          <p className="text-xs text-ash-grey/80">No colored mana sources or costs detected.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {usedColors.map((color) => (
+              <div key={color} className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 shrink-0 rounded-[3px] border border-orchid-hush/20 shadow-[0_0_10px_rgba(241,202,238,0.14)]"
+                  style={{ backgroundColor: COLOR_SWATCH[color] }}
+                />
+                <span className="w-12 shrink-0 text-xs text-ash-grey/80">{COLOR_LABEL[color]}</span>
+                <div className="flex flex-1 flex-col gap-1">
+                  <div className="flex items-center gap-1">
+                    <span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ash-grey/60">Sources</span>
+                    <div className="tech-meter h-1.5 flex-1 overflow-hidden rounded-[2px]">
+                      <div
+                        className="h-full rounded-[2px]"
+                        style={{ width: `${(sourceCounts[color] / maxSource) * 100}%`, backgroundColor: COLOR_SWATCH[color] }}
+                      />
+                    </div>
+                    <span className="w-5 shrink-0 text-right text-[10px] text-orchid-hush">{sourceCounts[color]}</span>
                   </div>
-                  <span className="w-5 shrink-0 text-right text-[10px] text-orchid-hush">{sourceCounts[color]}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ash-grey/60">Pips</span>
-                  <div className="tech-meter h-1.5 flex-1 overflow-hidden rounded-[2px]">
-                    <div
-                      className="h-full rounded-[2px] opacity-60"
-                      style={{ width: `${(pipCounts[color] / maxPip) * 100}%`, backgroundColor: COLOR_SWATCH[color] }}
-                    />
+                  <div className="flex items-center gap-1">
+                    <span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ash-grey/60">Pips</span>
+                    <div className="tech-meter h-1.5 flex-1 overflow-hidden rounded-[2px]">
+                      <div
+                        className="h-full rounded-[2px] opacity-60"
+                        style={{ width: `${(pipCounts[color] / maxPip) * 100}%`, backgroundColor: COLOR_SWATCH[color] }}
+                      />
+                    </div>
+                    <span className="w-5 shrink-0 text-right text-[10px] text-orchid-hush">{pipCounts[color]}</span>
                   </div>
-                  <span className="w-5 shrink-0 text-right text-[10px] text-orchid-hush">{pipCounts[color]}</span>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
