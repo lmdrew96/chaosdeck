@@ -44,7 +44,8 @@ export default function ZoneActionBar({
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const name = instance.cardOracleId ? card?.name : instance.tokenName ?? "Token";
-  const isLand = card ? (card.typeLine ?? card.cardFaces?.[0]?.typeLine ?? "").includes("Land") : false;
+  const typeLine = card?.typeLine ?? card?.cardFaces?.[0]?.typeLine;
+  const isLand = card ? (typeLine ?? "").includes("Land") : false;
   const manaCost = card?.manaCost ?? card?.cardFaces?.[0]?.manaCost;
   const oracleText = card?.oracleText ?? card?.cardFaces?.[0]?.oracleText;
 
@@ -86,6 +87,8 @@ export default function ZoneActionBar({
             </button>
           </div>
         </div>
+
+        {typeLine ? <p className="text-xs text-ash-grey/80">{typeLine}</p> : null}
 
         {oracleText ? (
           <p className="max-h-20 overflow-y-auto whitespace-pre-wrap text-xs text-ash-grey/90">{oracleText}</p>
