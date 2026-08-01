@@ -7,6 +7,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import CardSearchPanel from "@/components/deckbuilder/CardSearchPanel";
 import DeckEntriesPanel from "@/components/deckbuilder/DeckEntriesPanel";
 import DeckStats from "@/components/deckbuilder/DeckStats";
+import EDHRecommendations from "@/components/deckbuilder/EDHRecommendations";
 import ImportExportPanel from "@/components/deckbuilder/ImportExportPanel";
 
 const FORMAT_OPTIONS = ["commander", "modern", "pioneer", "standard", "legacy", "pauper"];
@@ -85,6 +86,7 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
         <div className="flex flex-col gap-4">
           <CardSearchPanel deckId={deckId} />
           <ImportExportPanel deckId={deckId} />
+          <EDHRecommendations deckId={deckId} />
         </div>
         <div className="flex flex-col gap-4">
           <DeckEntriesPanel deckId={deckId} format={deck.format} />
