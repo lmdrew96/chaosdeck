@@ -7,6 +7,7 @@ import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import CardBrowser from "@/components/cards/CardBrowser";
+import PreconDeckPicker from "@/components/deckbuilder/PreconDeckPicker";
 
 const strangestShowman = localFont({
   src: "../../Assets/fonts/StrangestShowman.ttf",
@@ -123,6 +124,8 @@ export default function Home() {
             {isConvexAuthLoading ? "Loading…" : isSignedIn ? "Create deck" : "Sign in to create"}
           </button>
         </form>
+
+        {isSignedIn && isClerkLoaded && isAuthenticated && <PreconDeckPicker />}
 
         <div className="flex flex-col gap-2">
           {!isSignedIn && isClerkLoaded && !isConvexAuthLoading && (
