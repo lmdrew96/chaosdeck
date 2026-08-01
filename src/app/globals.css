@@ -1,16 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #201913;
+  --background: #1f1914;
   --body-foreground: #f7f5fa;
-  --foreground: #abaa96;
-  --surface: #5e4535;
-  --surface-deep: #8aa38d;
-  --theme-coffee-bean: #201913;
-  --theme-ash-grey: #abaa96;
-  --theme-muted-teal: #8aa38d;
+  --foreground: #abaa98;
+  --surface: #5a4637;
+  --surface-deep: #8fa28f;
+  --theme-coffee-bean: #1f1914;
+  --theme-ash-grey: #abaa98;
+  --theme-muted-teal: #8fa28f;
   --theme-deep-teal: #6d8c7f;
-  --theme-orchid-hush: #f1caee;
+  /* Palette swatch #7B7B81, lightened to clear 4.5:1 against --background —
+     the raw swatch lands around 4.1:1 (see --theme-error below for the same
+     brighten-for-legibility pattern). */
+  --theme-orchid-hush: #8a8a90;
   --theme-accent-success: #6d8c7f;
   /* Text color for content sitting on top of a bg-orchid-hush surface (e.g.
      primary buttons) — dark ink in dark themes (orchid-hush is light there),
