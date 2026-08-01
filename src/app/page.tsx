@@ -63,7 +63,7 @@ export default function Home() {
               <>
                 <Link
                   href="/sign-in"
-                  className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean transition"
+                  className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent transition"
                 >
                   Sign in
                 </Link>
@@ -118,7 +118,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={creating || !name.trim() || !isSignedIn || !isClerkLoaded || !isAuthenticated || isConvexAuthLoading}
-            className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean transition disabled:opacity-50"
+            className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent transition disabled:opacity-50"
           >
             {isConvexAuthLoading ? "Loading…" : isSignedIn ? "Create deck" : "Sign in to create"}
           </button>

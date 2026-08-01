@@ -103,13 +103,13 @@ export default function NewGameModal({ deckId, deckName, onClose }: { deckId: Id
             + Add opponent
           </button>
 
-          {error ? <p className="text-xs text-[#cc2e6d]">{error}</p> : null}
+          {error ? <p className="text-xs text-error">{error}</p> : null}
 
           <button
             type="button"
             disabled={starting}
             onClick={() => void handleStart()}
-            className="tech-button w-full bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean disabled:opacity-50"
+            className="tech-button w-full bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent disabled:opacity-50"
           >
             {starting ? "Starting…" : opponents.length === 0 ? "Start solo goldfish" : "Start game"}
           </button>

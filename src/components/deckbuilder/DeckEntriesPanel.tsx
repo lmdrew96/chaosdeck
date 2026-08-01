@@ -63,7 +63,7 @@ function legalityBadge(card: Doc<"cards"> | null, format: string) {
   const status = card.legalities[format];
   if (!status) return { label: "unknown", className: "bg-[#5c5c5c] text-white" };
   if (status === "legal") return { label: "legal", className: "bg-muted-teal text-coffee-bean" };
-  if (status === "restricted") return { label: "restricted", className: "bg-orchid-hush text-coffee-bean" };
+  if (status === "restricted") return { label: "restricted", className: "bg-orchid-hush text-on-accent" };
   return { label: status.replace("_", " "), className: "bg-[#cc2e6d] text-white" };
 }
 

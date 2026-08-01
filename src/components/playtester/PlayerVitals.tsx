@@ -8,9 +8,9 @@ const MANA_COLORS = ["W", "U", "B", "R", "G", "C"] as const;
 
 const MANA_SWATCH: Record<(typeof MANA_COLORS)[number], string> = {
   W: "bg-[#fff6eb] text-[#4f3b1f] border-[#d7c39c]",
-  U: "bg-[#0080ff] text-[#174a7b] border-[#8eb7e8]",
+  U: "bg-[#0080ff] text-[#05111d] border-[#8eb7e8]",
   B: "bg-[#141414] text-[#f7f2ea] border-[#1f1f1f]",
-  R: "bg-[#ff0000] text-[#7b1e1e] border-[#d68d8d]",
+  R: "bg-[#ff0000] text-[#120505] border-[#d68d8d]",
   G: "bg-[#00ff91] text-[#2a5f2f] border-[#97c68b]",
   C: "bg-[#f3ebff] text-[#5a2d9d] border-[#c8a9f0]",
 };
@@ -49,7 +49,7 @@ export default function PlayerVitals({
         {interactive ? <StepperButton label="+1" onClick={() => void updateLife({ playerId: player._id, delta: 1 })} /> : null}
         {interactive ? <StepperButton label="+5" onClick={() => void updateLife({ playerId: player._id, delta: 5 })} /> : null}
         <span className="font-mono text-xs uppercase tracking-[0.16em] text-ash-grey/80">{player.displayName}</span>
-        {player.hasLost ? <span className="tech-badge bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-[#cc2e6d]">Lost</span> : null}
+        {player.hasLost ? <span className="tech-badge bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-error">Lost</span> : null}
       </div>
 
       {interactive ? (

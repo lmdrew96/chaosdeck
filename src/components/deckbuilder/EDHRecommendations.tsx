@@ -90,7 +90,7 @@ export default function EDHRecommendations({ deckId }: { deckId: Id<"decks"> }) 
       <h2 className="tech-panel-title font-mono text-sm font-semibold uppercase tracking-[0.24em]">EDHREC recommendations</h2>
 
       {loading && <p className="text-xs text-ash-grey/80">Loading recommendations…</p>}
-      {error && <p className="text-xs text-[#cc2e6d]">{error}</p>}
+      {error && <p className="text-xs text-error">{error}</p>}
       {!loading && !error && categories?.every((c) => c.cards.length === 0) && (
         <p className="text-xs text-ash-grey/80">No recommendations found for this commander.</p>
       )}
@@ -201,7 +201,7 @@ function RecommendationRow({
         onClick={onAdd}
         disabled={!card.oracleId || alreadyIn}
         title={!card.oracleId ? "Not in local card cache" : undefined}
-        className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
+        className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
         {alreadyIn ? "✓ In deck" : "Add"}
       </button>

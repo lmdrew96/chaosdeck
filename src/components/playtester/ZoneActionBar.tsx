@@ -93,7 +93,7 @@ export default function ZoneActionBar({
 
         <div className="flex flex-wrap gap-1.5">
           {DESTINATION_ORDER.filter((z) => z !== instance.zone).map((z) => (
-            <button key={z} type="button" onClick={() => moveTo(z)} className="tech-button tech-button-compact bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean">
+            <button key={z} type="button" onClick={() => moveTo(z)} className="tech-button tech-button-compact bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-on-accent">
               → {ZONE_LABELS[z]}
               {z === "battlefield" && isLand ? " (land)" : ""}
             </button>

@@ -2,9 +2,9 @@
 
 const SYMBOL_COLORS: Record<string, string> = {
   W: "bg-[#fff6eb] text-[#4f3b1f] border-[#d7c39c]",
-  U: "bg-[#0080ff] text-[#174a7b] border-[#8eb7e8]",
+  U: "bg-[#0080ff] text-[#05111d] border-[#8eb7e8]",
   B: "bg-[#141414] text-[#f7f2ea] border-[#1f1f1f]",
-  R: "bg-[#ff0000] text-[#7b1e1e] border-[#d68d8d]",
+  R: "bg-[#ff0000] text-[#120505] border-[#d68d8d]",
   G: "bg-[#00ff91] text-[#2a5f2f] border-[#97c68b]",
   X: "bg-[#ece8f7] text-[#4e3f79] border-[#b9b0d4]",
   C: "bg-[#f3ebff] text-[#5a2d9d] border-[#c8a9f0]",

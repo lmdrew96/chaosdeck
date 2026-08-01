@@ -82,7 +82,7 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
           <button
             onClick={() => void handleResolve()}
             disabled={busy || !pasted.trim()}
-            className="tech-button bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
+            className="tech-button bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-on-accent disabled:opacity-50"
           >
             Resolve cards
           </button>
@@ -90,7 +90,7 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
             <button
               onClick={() => void handleConfirm()}
               disabled={busy}
-              className="tech-button bg-deep-teal/80 px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
+              className="tech-button bg-deep-teal px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
             >
               Add {resolved.length} resolved to deck
             </button>
@@ -128,7 +128,7 @@ export default function ImportExportPanel({ deckId }: { deckId: Id<"decks"> }) {
         <button
           onClick={() => exportText && void navigator.clipboard.writeText(exportText)}
           disabled={!exportText}
-          className="tech-button w-fit bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean disabled:opacity-50"
+          className="tech-button w-fit bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-on-accent disabled:opacity-50"
         >
           Copy to clipboard
         </button>

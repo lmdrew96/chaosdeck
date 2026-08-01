@@ -9,9 +9,23 @@
   --theme-coffee-bean: #201913;
   --theme-ash-grey: #abaa96;
   --theme-muted-teal: #8aa38d;
-  --theme-deep-teal: #6b897d;
+  --theme-deep-teal: #6d8c7f;
   --theme-orchid-hush: #f1caee;
-  --theme-accent-success: #6b897d;
+  --theme-accent-success: #6d8c7f;
+  /* Text color for content sitting on top of a bg-orchid-hush surface (e.g.
+     primary buttons) — dark ink in dark themes (orchid-hush is light there),
+     but light ink in *-light themes, where orchid-hush is darkened below to
+     stay WCAG AA-legible as plain text (see the *-light theme blocks). A
+     single fixed text color can't serve both cases at once. */
+  --theme-on-accent: var(--theme-coffee-bean);
+  /* Error/destructive text — brightened relative to the raw brand pink so it
+     clears 4.5:1 against this theme's near-black background. */
+  --theme-error: #da5a8d;
+  /* How much of --surface-deep tints the .tech-panel background before
+     falling back to --background — kept low enough that ash-grey/orchid-hush
+     text on panels still clears 4.5:1 (see the *-light and tide overrides). */
+  --panel-tint-1: 0.25;
+  --panel-tint-2: 0.18;
   --accent: var(--theme-orchid-hush);
   --accent-success: var(--theme-accent-success);
   --tech-card-clip: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
@@ -25,10 +39,14 @@ html[data-theme="charcoal"] {
   --surface-deep: #546564;
   --theme-coffee-bean: #141513;
   --theme-ash-grey: #afc2d6;
-  --theme-muted-teal: #546564;
+  --theme-muted-teal: #6f8684;
   --theme-deep-teal: #849bac;
   --theme-orchid-hush: #849bac;
-  --theme-accent-success: #627580;
+  --theme-accent-success: #6f8591;
+  --theme-on-accent: var(--theme-coffee-bean);
+  --theme-error: #d85388;
+  --panel-tint-1: 0.33;
+  --panel-tint-2: 0.24;
 }
 
 html[data-theme="plum"] {
@@ -39,10 +57,14 @@ html[data-theme="plum"] {
   --surface-deep: #4e3742;
   --theme-coffee-bean: #261627;
   --theme-ash-grey: #ebdfdc;
-  --theme-muted-teal: #4e3742;
-  --theme-deep-teal: #926868;
+  --theme-muted-teal: #a27c8e;
+  --theme-deep-teal: #a27d7d;
   --theme-orchid-hush: #c59dc9;
-  --theme-accent-success: #8b6f7a;
+  --theme-accent-success: #99808a;
+  --theme-on-accent: var(--theme-coffee-bean);
+  --theme-error: #da5c8e;
+  --panel-tint-1: 0.97;
+  --panel-tint-2: 0.7;
 }
 
 html[data-theme="tide"] {
@@ -53,10 +75,14 @@ html[data-theme="tide"] {
   --surface-deep: #6e7c8b;
   --theme-coffee-bean: #35425e;
   --theme-ash-grey: #aabcaf;
-  --theme-muted-teal: #6e7c8b;
-  --theme-deep-teal: #899c9a;
+  --theme-muted-teal: #aab3bc;
+  --theme-deep-teal: #a6b5b3;
   --theme-orchid-hush: #b8d6d3;
-  --theme-accent-success: #7f9592;
+  --theme-accent-success: #a5b5b2;
+  --theme-on-accent: var(--theme-coffee-bean);
+  --theme-error: #e99ebc;
+  --panel-tint-1: 0.09;
+  --panel-tint-2: 0.06;
 }
 
 html[data-theme="default-light"] {
@@ -67,10 +93,16 @@ html[data-theme="default-light"] {
   --surface-deep: #d2c5b6;
   --theme-coffee-bean: #2c251f;
   --theme-ash-grey: #6b6258;
-  --theme-muted-teal: #6f867d;
-  --theme-deep-teal: #4f6f69;
+  --theme-muted-teal: #7e958c;
+  --theme-deep-teal: #6e9890;
   --theme-orchid-hush: #6b4e86;
-  --theme-accent-success: #6f867d;
+  --theme-accent-success: #7e958c;
+  /* orchid-hush is dark/saturated in light themes (unlike the light-pink
+     dark-theme value), so on-accent buttons need light text, not coffee-bean. */
+  --theme-on-accent: var(--background);
+  --theme-error: #cc2e6d;
+  --panel-tint-1: 0.44;
+  --panel-tint-2: 0.32;
 }
 
 html[data-theme="charcoal-light"] {
@@ -81,10 +113,14 @@ html[data-theme="charcoal-light"] {
   --surface-deep: #c8d2dc;
   --theme-coffee-bean: #1f2630;
   --theme-ash-grey: #64707d;
-  --theme-muted-teal: #73879a;
-  --theme-deep-teal: #4d6579;
+  --theme-muted-teal: #7f91a3;
+  --theme-deep-teal: #7892a9;
   --theme-orchid-hush: #506f8d;
-  --theme-accent-success: #73879a;
+  --theme-accent-success: #7f91a3;
+  --theme-on-accent: var(--background);
+  --theme-error: #cc2e6d;
+  --panel-tint-1: 0.12;
+  --panel-tint-2: 0.09;
 }
 
 html[data-theme="plum-light"] {
@@ -95,10 +131,14 @@ html[data-theme="plum-light"] {
   --surface-deep: #d7c4e0;
   --theme-coffee-bean: #2d2330;
   --theme-ash-grey: #766a79;
-  --theme-muted-teal: #8a6f84;
-  --theme-deep-teal: #6c5565;
-  --theme-orchid-hush: #8b6394;
-  --theme-accent-success: #8a6f84;
+  --theme-muted-teal: #a08a9b;
+  --theme-deep-teal: #a2899a;
+  --theme-orchid-hush: #896192;
+  --theme-accent-success: #a08a9b;
+  --theme-on-accent: var(--background);
+  --theme-error: #cc2e6d;
+  --panel-tint-1: 0.09;
+  --panel-tint-2: 0.06;
 }
 
 html[data-theme="tide-light"] {
@@ -108,11 +148,15 @@ html[data-theme="tide-light"] {
   --surface: #d8e5e4;
   --surface-deep: #c0d4d0;
   --theme-coffee-bean: #223236;
-  --theme-ash-grey: #64757b;
-  --theme-muted-teal: #6c8f8e;
-  --theme-deep-teal: #4c726f;
-  --theme-orchid-hush: #5f8aa1;
-  --theme-accent-success: #6c8f8e;
+  --theme-ash-grey: #637379;
+  --theme-muted-teal: #81a09f;
+  --theme-deep-teal: #74a39f;
+  --theme-orchid-hush: #4f7387;
+  --theme-accent-success: #81a09f;
+  --theme-on-accent: var(--background);
+  --theme-error: #cc2e6d;
+  --panel-tint-1: 0.06;
+  --panel-tint-2: 0.04;
 }
 
 @theme inline {
@@ -126,6 +170,8 @@ html[data-theme="tide-light"] {
   --color-muted-teal: var(--theme-muted-teal);
   --color-deep-teal: var(--theme-deep-teal);
   --color-orchid-hush: var(--theme-orchid-hush);
+  --color-on-accent: var(--theme-on-accent);
+  --color-error: var(--theme-error);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -170,8 +216,12 @@ body {
   border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
   border-radius: 6px;
   background:
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-deep) 82%, var(--background)), color-mix(in srgb, var(--surface-deep) 62%, var(--background))),
-    var(--surface-deep);
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface-deep) calc(var(--panel-tint-1) * 100%), var(--background)),
+      color-mix(in srgb, var(--surface-deep) calc(var(--panel-tint-2) * 100%), var(--background))
+    ),
+    color-mix(in srgb, var(--surface-deep) calc(var(--panel-tint-1) * 100%), var(--background));
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent),
     inset 0 24px 42px color-mix(in srgb, var(--background) 18%, transparent),
@@ -266,7 +316,7 @@ body {
 .tech-stepper {
   border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
   border-radius: 4px;
-  background: color-mix(in srgb, var(--accent-success) 82%, var(--background));
+  background: var(--accent-success);
   box-shadow:
     inset 0 -3px 0 color-mix(in srgb, var(--background) 24%, transparent),
     0 0 0 1px color-mix(in srgb, var(--background) 18%, transparent);

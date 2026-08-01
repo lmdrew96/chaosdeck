@@ -48,7 +48,7 @@ export default function ZoneViewerModal({
             <button
               type="button"
               onClick={() => void draw({ playerId: ownerId, count: 1 })}
-              className="tech-button tech-button-compact bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-coffee-bean"
+              className="tech-button tech-button-compact bg-orchid-hush px-3 py-1.5 text-xs font-semibold text-on-accent"
             >
               Draw 1
             </button>

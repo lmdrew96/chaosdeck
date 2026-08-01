@@ -291,12 +291,12 @@ export default function CardBrowser({ deckId, title = "Card search", description
           placeholder="Search cards or Scryfall syntax…"
           className="tech-control px-3 py-2 text-sm text-orchid-hush outline-none transition"
         />
-        {addError ? <p className="text-xs text-[#cc2e6d]">{addError}</p> : null}
+        {addError ? <p className="text-xs text-error">{addError}</p> : null}
 
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
           {!hasQuery && <p className="text-xs text-ash-grey/80">Search by name or use Scryfall syntax like <span className="font-mono">o=draw c=u</span>.</p>}
           {visibleSearching && <p className="text-xs text-ash-grey/80">Searching…</p>}
-          {visibleSearchError && <p className="text-xs text-[#cc2e6d]">{visibleSearchError}</p>}
+          {visibleSearchError && <p className="text-xs text-error">{visibleSearchError}</p>}
           {hasQuery && !visibleSearching && !visibleSearchError && visibleResults.length === 0 && <p className="text-xs text-ash-grey/80">No cards found.</p>}
           {visibleResults.map((card) => (
             <CardResultRow
@@ -453,7 +453,7 @@ function CardResultRow({
               onClick={() => onAdd(section)}
               disabled={commanderBlocked || isAdded || colorBlocked}
               title={commanderBlocked ? "Commander section allows only one copy" : colorBlocked ? "Card is outside this deck's commander color identity" : undefined}
-              className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
+              className="tech-button tech-button-compact bg-orchid-hush px-2 py-1 text-xs font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isAdded ? "✓ Added" : commanderBlocked ? "1 max" : colorBlocked ? "Off-color" : "Add"}
             </button>
@@ -569,7 +569,7 @@ function CardModal({
                       onClick={onAdd}
                       disabled={commanderBlocked || isAdded || colorBlocked}
                       title={commanderBlocked ? "Commander section allows only one copy" : colorBlocked ? "Card is outside this deck's commander color identity" : undefined}
-                      className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean disabled:cursor-not-allowed disabled:opacity-50"
+                      className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isAdded ? "✓ Added" : commanderBlocked ? "1 max" : colorBlocked ? "Off-color" : "Add selected print"}
                     </button>

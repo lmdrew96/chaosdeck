@@ -117,7 +117,7 @@ export default function PlaytestBoard({ gameId }: { gameId: Id<"games"> }) {
       <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
         <div className="tech-panel flex flex-col gap-3 px-6 py-5 text-sm text-ash-grey/80">
           <p>Game not found.</p>
-          <Link href="/" className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+          <Link href="/" className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent">
             Back home
           </Link>
         </div>
@@ -136,7 +136,7 @@ export default function PlaytestBoard({ gameId }: { gameId: Id<"games"> }) {
                 key={player._id}
                 type="button"
                 onClick={() => chooseSeat(player._id)}
-                className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean"
+                className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent"
               >
                 Play as {player.displayName}
               </button>
@@ -198,7 +198,7 @@ export default function PlaytestBoard({ gameId }: { gameId: Id<"games"> }) {
           >
             ← Prev
           </button>
-          <button type="button" onClick={() => void advancePhase({ gameId })} className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+          <button type="button" onClick={() => void advancePhase({ gameId })} className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent">
             Next phase →
           </button>
         </div>

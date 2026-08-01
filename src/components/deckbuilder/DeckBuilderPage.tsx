@@ -35,7 +35,7 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
       <div className="tech-page flex min-h-screen flex-1 items-center justify-center px-6 py-16">
         <div className="tech-panel flex flex-col gap-3 px-6 py-5 text-sm text-ash-grey/80">
           <p>Sign in to open this deck.</p>
-          <Link href="/sign-in" className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+          <Link href="/sign-in" className="tech-button w-fit bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent">
             Sign in
           </Link>
         </div>
@@ -84,7 +84,7 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
               </option>
             ))}
           </select>
-          <button type="button" onClick={() => setPlaytestOpen(true)} className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-coffee-bean">
+          <button type="button" onClick={() => setPlaytestOpen(true)} className="tech-button bg-orchid-hush px-4 py-2 text-xs font-semibold text-on-accent">
             Playtest
           </button>
         </div>
