@@ -186,7 +186,7 @@ export default function DeckEntriesPanel({
                               <img
                                 src={entry.printImageUri ?? entry.card?.imageUri}
                                 alt={entry.card?.name ?? "Card image"}
-                                className="hidden h-20 w-14 shrink-0 rounded-[3px] border border-orchid-hush/20 object-cover shadow-[0_10px_24px_rgba(0,0,0,0.18)] sm:block"
+                                className="h-20 w-14 shrink-0 rounded-[3px] border border-orchid-hush/20 object-cover shadow-[0_10px_24px_rgba(0,0,0,0.18)]"
                               />
                             ) : null}
                             <div className="flex min-w-0 flex-1 flex-col">
