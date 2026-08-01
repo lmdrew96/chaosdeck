@@ -109,6 +109,18 @@ export default function DeckEntriesPanel({
     setCollapsedGroups((current) => ({ ...current, [key]: !current[key] }));
   };
 
+  const allGroupKeys = SECTION_ORDER.flatMap((section) =>
+    Array.from(new Set(bySection[section].map((e) => getCardTypeGroup(e.card?.typeLine)))).map(
+      (groupName) => `${section}:${groupName}`,
+    ),
+  );
+  const allCollapsed = allGroupKeys.length > 0 && allGroupKeys.every((key) => collapsedGroups[key]);
+  const toggleAllGroups = () => {
+    const next: Record<string, boolean> = {};
+    for (const key of allGroupKeys) next[key] = !allCollapsed;
+    setCollapsedGroups(next);
+  };
+
   const showEntryPreview = (entry: HydratedEntry, element: HTMLElement) => {
     if (!entry.card) return;
     showPreview(
@@ -146,17 +158,27 @@ export default function DeckEntriesPanel({
             </span>
           ) : null}
         </div>
-        <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
-          <span>Sort</span>
-          <select
-            value={sortMode}
-            onChange={(e) => setSortMode(e.target.value as SortMode)}
-            className="tech-control px-2 py-1 text-[11px] text-orchid-hush outline-none"
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleAllGroups}
+            disabled={allGroupKeys.length === 0}
+            className="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-ash-grey/80 transition hover:text-orchid-hush disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="alphabetical">Alphabetical</option>
-            <option value="mana">Mana value</option>
-          </select>
-        </label>
+            {allCollapsed ? "Expand all" : "Collapse all"}
+          </button>
+          <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-ash-grey/80">
+            <span>Sort</span>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              className="tech-control px-2 py-1 text-[11px] text-orchid-hush outline-none"
+            >
+              <option value="alphabetical">Alphabetical</option>
+              <option value="mana">Mana value</option>
+            </select>
+          </label>
+        </div>
       </div>
       {SECTION_ORDER.map((section) =>
         bySection[section].length === 0 ? null : (
