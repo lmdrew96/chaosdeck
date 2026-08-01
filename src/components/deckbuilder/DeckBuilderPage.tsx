@@ -82,15 +82,15 @@ export default function DeckBuilderPage({ deckId }: { deckId: Id<"decks"> }) {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="flex flex-col gap-4">
           <CardSearchPanel deckId={deckId} />
+          <DeckStats deckId={deckId} />
           <ImportExportPanel deckId={deckId} />
           <EDHRecommendations deckId={deckId} />
         </div>
         <div className="flex flex-col gap-4">
           <DeckEntriesPanel deckId={deckId} format={deck.format} />
-          <DeckStats deckId={deckId} />
         </div>
       </div>
     </div>
